@@ -1,0 +1,453 @@
+/*  John Walker's Floating Point Benchmark, derived from...
+
+             Marinchip Interactive Lens Design System
+                   John Walker   December 1980
+
+                       by John Walker
+                   http://www.fourmilab.ch/
+
+    This program may be used, distributed, and modified freely
+    as long as the origin information is preserved.
+
+    This is a complete optical design raytracing algorithm,
+    stripped of its user interface and recast into PL/I.  It not
+    only determines execution speed on an extremely floating
+    point (including trig function) intensive real-world
+    application, it checks accuracy on an algorithm that is
+    exquisitely sensitive to errors.  The performance of this
+    program is typically far more sensitive to changes in the
+    efficiency of the trigonometric library routines than the
+    average floating point program.
+
+    This program was developed and tested using the Iron Spring
+    PL/I compiler for Linux:
+        http://www.iron-spring.com/
+    As far as I know, this code is compliant with the PL/I standard
+    as it existed in 1978.  I have included several work-arounds for
+    features not implemented in the Iron Spring compiler, but they
+    should be compatible with compilers which do support these
+    features.  The character set is compliant with the ASCII
+    representation of PL/I as defined in the IBM PL/I language
+    reference for MVS & VM, Release 1.1, Second Edition (June 1995).
+
+    Implemented in September 2017 by John Walker.
+*/
+
+Fbench: procedure options(main);
+
+    declare SYSPRINT file print;
+
+    /* The cot() function defined in terms of tan(). */
+
+    cot: procedure(x) returns(float binary(49));
+        declare x float binary(49);
+
+        return (1 / tan(x));
+    end cot;
+
+    /* As of version 0.9.9b, the Iron Spring PL/I compiler does
+       not implement the asin() function (a standard PL/I
+       built-in). We define it here in terms of functions which
+       it does implement.  If your PL/I implementation provides
+       asin(), change references to l_asin() in the code to
+       asin(). */
+
+    l_asin: procedure(x) returns(float binary(49));
+        declare x float binary(49);
+
+        return (atan(x, sqrt(1 - (x * x))));
+    end l_asin;
+
+    /* Wavelengths of standard spectral lines in Angstroms
+              (Not all are used in this program) */
+
+    declare A_line      float binary(49) value(7621.0),
+            B_line      float binary(49) value(6869.955),
+            C_line      float binary(49) value(6562.816),
+            D_line      float binary(49) value(5895.944),
+            E_line      float binary(49) value(5269.557),
+            F_line      float binary(49) value(4861.344),
+            Gprime_line float binary(49) value(4340.477),
+            H_line      float binary(49) value(3968.494);
+
+    /* The test case used in this program is the design for a 4
+       inch f/12 achromatic telescope objective used as the
+       example in Wyld's classic work on ray tracing by hand,
+       given in Amateur Telescope Making, Volume 3 (Volume 2 in
+       the 1996 reprint edition). */
+
+    declare wyldClearAperture float binary(49) value(4);
+    declare wyldSurfaces fixed binary value(4);
+    declare surfaces(0:3, 0:3) float binary(49) value
+        ( 27.05, 1.5137, 63.6,  0.52,   /* Crown glass front element */
+         -16.68, 1.0,     0.0,  0.138,
+         -16.68, 1.6164, 36.7,  0.38,   /* Flint glass rear element */
+         -78.1,  1.0,     0.0,  0.0  );
+
+    /* Mnemonics for indices in the surfaces array */
+
+    declare Curvature_Radius fixed binary value(0),
+            Index_Of_Refraction fixed binary value(1),
+            Dispersion fixed binary value(2),
+            Edge_Thickness fixed binary value(3);
+
+    /* Mnemonics for axial incidence */
+
+    declare Marginal_Ray fixed binary(1) value(0),
+            Paraxial_Ray fixed binary(1) value(1);
+
+    declare axial_incidence fixed binary(1);
+
+    declare (clear_aperture, aberr_lspher, aberr_osc, aberr_lchrom,
+             max_lspher, max_osc, max_lchrom, radius_of_curvature,
+             object_distance, ray_height, axis_slope_angle,
+             from_index, to_index) float binary(49);
+
+    /*  Calculate passage through surface
+
+        If the variable axial_incidence is Paraxial_Ray, the
+        trace through the surface will be done using the
+        paraxial approximations. Otherwise, the normal
+        trigonometric trace will be done.
+
+        This subroutine takes the following global inputs:
+
+        radius_of_curvature     Radius of curvature of surface
+                                being crossed.  If 0, surface is
+                                plane.
+
+        object_distance         Distance of object focus from
+                                lens vertex.  If 0, incoming
+                                rays are parallel and
+                                the following must be specified:
+
+        ray_height              Height of ray from axis.  Only
+                                relevant if object_distance = 0
+
+        axis_slope_angle        Angle incoming ray makes with axis
+                                at intercept
+
+        from_index              Refractive index of medium being left
+
+        to_index                Refractive index of medium being
+                                entered
+
+        The outputs are the following global variables:
+
+        object_distance         Distance from vertex to object focus
+                                after refraction
+
+        axis_slope_angle        Angle incoming ray makes with axis
+                                at intercept after refraction
+    */
+
+    transit_surface: procedure;
+        declare (iang, rang, iang_sin, rang_sin,
+                 old_axis_slope_angle, sagitta) float binary(49);
+
+        if axial_incidence = Paraxial_Ray then do;
+
+            /* Paraxial ray */
+
+            if radius_of_curvature ^= 0 then do;
+
+                /* Curved surface */
+
+                if object_distance = 0 then do;
+                    axis_slope_angle = 0;
+                    iang_sin = ray_height / radius_of_curvature;
+                end; else do;
+                    iang_sin = ((object_distance -
+                    radius_of_curvature) / radius_of_curvature) *
+                    axis_slope_angle;
+                end;
+                rang_sin = (from_index / to_index) * iang_sin;
+                old_axis_slope_angle = axis_slope_angle;
+                axis_slope_angle = axis_slope_angle +
+                    iang_sin - rang_sin;
+                if object_distance ^= 0 then do;
+                    ray_height = object_distance * old_axis_slope_angle;
+                end;
+                object_distance = ray_height / axis_slope_angle;
+            end; else do;
+
+                /* Flat surface */
+
+                object_distance = object_distance * (to_index / from_index);
+                axis_slope_angle = axis_slope_angle * (from_index / to_index);
+            end;
+
+        end; else do;
+
+            /* Marginal ray */
+
+            if radius_of_curvature ^= 0 then do;
+
+                /* Curved surface */
+
+                if object_distance = 0 then do;
+                    axis_slope_angle = 0;
+                    iang_sin = ray_height / radius_of_curvature;
+                end; else do;
+                    iang_sin = ((object_distance -
+                        radius_of_curvature) / radius_of_curvature) *
+                        sin(axis_slope_angle);
+                end;
+                iang = l_asin(iang_sin);
+                rang_sin = (from_index / to_index) * iang_sin;
+                old_axis_slope_angle = axis_slope_angle;
+                axis_slope_angle = axis_slope_angle +
+                    iang - l_asin(rang_sin);
+                sagitta = sin((old_axis_slope_angle + iang) / 2);
+                sagitta = 2 * radius_of_curvature * (sagitta * sagitta);
+                object_distance = ((radius_of_curvature *
+                    sin(old_axis_slope_angle + iang)) *
+                    cot(axis_slope_angle)) + sagitta;
+            end; else do;
+
+                /* Flat surface */
+
+                rang = -l_asin((from_index / to_index) *
+                    sin(axis_slope_angle));
+                object_distance = object_distance * ((to_index *
+                    cos(-rang)) / (from_index *
+                    cos(axis_slope_angle)));
+                axis_slope_angle = -rang;
+            end;
+        end;
+    end transit_surface;
+
+    /* Perform ray trace in a specific spectral line */
+
+    trace_line: procedure (line, ray_h);
+        declare (line, ray_h) float binary(49);
+        declare i fixed binary;
+
+        object_distance = 0;
+        ray_height = ray_h;
+        from_index = 1;
+
+        do i = 0 to wyldSurfaces - 1;
+            radius_of_curvature = surfaces(i, Curvature_Radius);
+            to_index = surfaces(i, Index_Of_Refraction);
+            if to_index > 1 then do;
+                to_index = to_index + ((D_line - line) /
+                    (C_line - F_line)) *
+                    ((surfaces(i, Index_Of_Refraction) - 1) /
+                    surfaces(i, Dispersion));
+            end;
+            call transit_surface;
+            from_index = to_index;
+            if i < wyldSurfaces - 1 then do;
+                object_distance = object_distance - surfaces(i, Edge_Thickness);
+            end;
+        end;
+    end trace_line;
+
+    /* The evaluateDesign function performs a ray trace on a
+       given design with a specified clear aperture and computes
+       dEval which includes the results for the D line and
+       calculation of spherical aberration, coma, and chromatic
+       aberration, along with the conventional acceptable upper
+       bounds for these quantities. */
+
+    declare
+        1 dEval,
+            2 D_trace,
+                3 Marginal,
+                    4 OD float binary(49),
+                    4 SA float binary(49),
+                3 Paraxial,
+                    4 OD float binary(49),
+                    4 SA float binary(49),
+            2 Aberrations,
+                3 longitudinalSphericalAberration float binary(49),
+                3 offenseAgainstSineCondition float binary(49),
+                3 axialChromaticAberration float binary(49),
+            2 MaxAberrations,
+                3 longitudinalSphericalAberration float binary(49),
+                3 offenseAgainstSineCondition fixed decimal(16, 11)
+                    initial(0.0025),
+                3 axialChromaticAberration float binary(49)
+    ;
+
+    evaluate_design: procedure;
+        declare (cMarginalOD, fMarginalOD, sin_dm_sa) float binary(49);
+
+        /* D marginal ray */
+
+        axial_incidence = Marginal_Ray;
+        call trace_line(D_line, wyldClearAperture / 2);
+        dEval.D_trace.Marginal.OD = object_distance;
+        dEval.D_trace.Marginal.SA = axis_slope_angle;
+
+        /* D paraxial ray */
+
+        axial_incidence = Paraxial_Ray;
+        call trace_line(D_line, wyldClearAperture / 2);
+        dEval.D_trace.Paraxial.OD = object_distance;
+        dEval.D_trace.Paraxial.SA = axis_slope_angle;
+
+        /* C marginal ray */
+
+        axial_incidence = Marginal_Ray;
+        call trace_line(C_line, wyldClearAperture / 2);
+        cMarginalOD = object_distance;
+
+        /* F marginal ray */
+
+        call trace_line(F_line, wyldClearAperture / 2);
+        fMarginalOD = object_distance;
+
+        /* Compute aberrations of the design */
+
+        /* The longitudinal spherical aberration is just the
+           difference between where the D line comes to focus
+           for paraxial and marginal rays. */
+        dEval.Aberrations.longitudinalSphericalAberration =
+            dEval.D_trace.Paraxial.OD - dEval.D_trace.Marginal.OD;
+
+        /* The offense against the sine condition is a measure
+           of the degree of coma in the design.  We compute it
+           as the lateral distance in the focal plane between
+           where a paraxial ray and marginal ray in the D line
+           come to focus. */
+        dEval.Aberrations.offenseAgainstSineCondition =
+            1 - (dEval.D_trace.Paraxial.OD * dEval.D_trace.Paraxial.SA) /
+            (sin(dEval.D_trace.Marginal.SA) * dEval.D_trace.Marginal.OD);
+
+        /* The axial chromatic aberration is the distance between
+           where marginal rays in the C and F lines come to focus. */
+        dEval.Aberrations.axialChromaticAberration =
+            fMarginalOD - cMarginalOD;
+
+        /* Compute maximum acceptable values for each aberration */
+
+        /* Maximum longitudinal spherical aberration, which is
+           also the maximum for axial chromatic aberration.  This
+           is computed for the D line.  */
+        sin_dm_sa = sin(dEval.D_trace.Marginal.SA);
+        dEval.MaxAberrations.longitudinalSphericalAberration =
+            0.0000926 / (sin_dm_sa * sin_dm_sa);
+        dEval.MaxAberrations.axialChromaticAberration =
+            dEval.MaxAberrations.longitudinalSphericalAberration;
+
+    end evaluate_design;
+
+    /* The evaluationReport function takes dEval and computes
+       eReport, an array of strings containing a
+       primate-readable version of the evaluation. */
+
+    declare eReport(0:8) character(60) varying;
+
+    evaluationReport: procedure;
+        declare maxPer character(40)
+            value('    (Maximum permissible):');
+        declare (v1, v2) character(40) varying;
+
+        put string(v1) edit (dEval.D_trace.Marginal.OD) (F(16, 11));
+        put string(v2) edit (dEval.D_trace.Marginal.SA) (F(16, 11));
+        eReport(0) = '   Marginal ray        ' || v1 || v2;
+
+        put string(v1) edit (dEval.D_trace.Paraxial.OD) (F(16, 11));
+        put string(v2) edit (dEval.D_trace.Paraxial.SA) (F(16, 11));
+        eReport(1) = '   Paraxial ray        ' || v1 || v2;
+
+        put string(v1)
+            edit (dEval.Aberrations.longitudinalSphericalAberration)
+            (F(16, 11));
+        eReport(2) = 'Longitudinal spherical aberration:      ' || v1;
+        put string(v1)
+            edit (dEval.MaxAberrations.longitudinalSphericalAberration)
+            (F(16, 11));
+        eReport(3) = maxPer || v1;
+
+        put string(v1)
+            edit (dEval.Aberrations.offenseAgainstSineCondition)
+             (F(16, 11));
+        eReport(4) = 'Offense against sine condition (coma):  ' || v1;
+        put string(v1)
+            edit (dEval.MaxAberrations.offenseAgainstSineCondition)
+            (F(16, 11));
+        eReport(5) = maxPer || v1;
+
+        put string(v1)
+            edit (dEval.Aberrations.axialChromaticAberration)
+             (F(16, 11));
+        eReport(6) = 'Axial chromatic aberration:             ' || v1;
+        put string(v1)
+            edit (dEval.MaxAberrations.axialChromaticAberration)
+            (F(16, 11));
+        eReport(7) = maxPer || v1;
+
+    end evaluationReport;
+
+    /* The validateResults function compares the
+       primate-readable eReport from evaluationReport with the
+       archival results from the reference implementation (which
+       all language implementations must reproduce
+       character-by-character [apart from trivia such as end of
+       line conventions and trailing white space]).  It returns
+       a Boolean indicating whether the results matched. */
+
+    validateResults: procedure returns(bit(1));
+
+        /* Reference results.  These happen to be derived from a run
+           on Microsoft Quick BASIC on the IBM PC/AT. */
+        declare expectedResults(0:8) character(60) varying value
+            ( '   Marginal ray          47.09479120920   0.04178472683',
+              '   Paraxial ray          47.08372160249   0.04177864821',
+              'Longitudinal spherical aberration:        -0.01106960671',
+              '    (Maximum permissible):                 0.05306749907',
+              'Offense against sine condition (coma):     0.00008954761',
+              '    (Maximum permissible):                 0.00250000000',
+              'Axial chromatic aberration:                0.00448229032',
+              '    (Maximum permissible):                 0.05306749907' );
+
+        declare (i, errs) fixed binary initial(0);
+
+        do i = 0 to dimension(eReport(1)) - 1;
+            if (expectedResults(i) ^= eReport(i)) then do;
+                put skip list('Validation failed on line ');
+                put edit (i + 1) (F(1));
+                put skip list('  Expected: ''(');
+                put edit (expectedResults(i)) (A);
+                put edit  (')''') (A);
+                put skip list('  Received: ''(');
+                put edit (eReport(i)) (A);
+                put edit  (')''') (A);
+                errs = errs + 1;
+            end;
+        end;
+
+        return (errs = 0);
+    end validateResults;
+
+    /* Run the benchmark for the specified number of iterations. */
+
+    runBenchmark: procedure(iterations);
+        declare iterations fixed binary(31);
+
+        declare n fixed binary(31);
+
+        do n = 1 to iterations;
+            call evaluate_design;
+        end;
+
+        call evaluationReport;
+        if (^validateResults) then do;
+            put skip list('Error(s) detected in results.  This is VERY SERIOUS.');
+        end;
+
+    end runBenchmark;
+
+    /* numberOfIterations specifies the number for iterations to
+       run.  For archival purposes, set the iteration count to
+       achieve a run time of around five minutes.  For the
+       archival runs on my machine, I used an iteration count of
+       29592068.  */
+
+    declare numberOfIterations fixed binary(31) value(100000);
+    call runBenchmark(numberOfIterations);
+
+end Fbench;

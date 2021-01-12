@@ -1,0 +1,202 @@
+               Prolog Floating Point Benchmark
+                      Development Notes
+                     September 29th, 2017
+
+This directory contains an implementation of the Fourmilab
+floating point benchmark in Prolog.
+
+Prolog is a language designed for logic programming.  Working in
+conjunction with a database of facts and rules, one can make
+queries which are answered by applying the rules of formal
+logic. Thus, in Prolog, one often describes the answer one seeks
+and lets the language implementation find it rather than
+prescribing the steps through which the answer is obtained as
+one would in a conventional imperative programming language. 
+Prolog is used in artificial intelligence and computational
+linguistics research, and is well-suited to the analysis of
+unstructured natural language.  Components of IBM's Watson
+question answering system are written in Prolog.  The first
+Prolog system was developed in 1972, and the language was
+standardised as ISO/IEC 13211-1 in 1995, with subsequent
+corrigenda in 2007 and 2012.
+
+Prolog is intended for problems which are nothing like that
+performed by the floating point benchmark, which is a typical
+scientific computing task involving floating point numbers and
+trigonometric functions.  However, Prolog supports floating
+point numbers and trigonometric functions, and as a
+Turing-complete language is able to perform any computational
+task which can be programmed in any other such language.  So,
+this can be considered as a case of misusing Prolog for a task
+for which it wasn't remotely intended, with the goal of seeing
+how well it expresses the algorithms and performs.
+
+The resulting program uses very little of Prolog's sophisticated
+pattern-matching and inference engine: the task simply doesn't
+require these facilities.  Instead, Prolog is used as a
+functional programming language, employing its variables to pass
+arguments to and return values from functions coded as Prolog
+rules.  The result looks somewhat odd to those accustomed to
+other programming languages, but one you get used to the syntax,
+the code is expressive and comprehensible.  Pattern matching
+allows replacing all of the conditionals for the four cases of
+the transit_surface operation (marginal or paraxial ray, flat or
+curved surface) with four different rules selected by the
+arguments passed to them, as done in functional languages such
+as Haskell and Erlang.
+
+I originally developed this benchmark on GNU Prolog
+    http://gprolog.org/
+version 1.4.4, but when I went to run the benchmark for an
+archival run time of around five minutes, I ran into the problem
+that GNU Prolog does not fully implement tail call
+optimisation.  What does this mean?  Prolog, like many
+functional languages, does not provide control structures for
+iteration.  Instead, iteration is accomplished by recursion. 
+For example, here's how you might write the factorial function
+in C using iteration:
+
+    int factorial(int n) {
+        int result = 1;
+        int i;
+
+        for (i = 1; i <= n; i++) {
+            result *= i;
+        }
+        return result;
+    }
+
+But Prolog has no equivalent of C's for statement, so you define
+the factorial function recursively as it's usually expressed in
+mathematics:
+
+    fact(N, NF) :-
+            fact(1, N, 1, NF).
+
+    fact(X, X, F, F) :- !.
+
+    fact(X, N, FX, F) :-
+            X1 is X + 1,
+            FX1 is FX * X1,
+            fact(X1, N, FX1, F).
+
+Now, this looks a bit odd until you become accustomed to the
+rather eccentric syntax of Prolog, but the key thing to take
+away is that evaluation is accomplished by the four argument
+definition of fact().  When the final definition of fact() calls
+itself, it is the last item executed, and tail call optimisation
+takes note of this and, instead of recursively calling itself,
+uses the same stack frame and transforms the recursion into an
+iteration.  This allows recursion to an arbitrary depth without
+consuming large amounts of stack memory.
+
+Tail call optimisation is common among languages such as Lisp,
+Haskell, and Prolog, but GNU Prolog does not implement it, or at
+least doesn't do so in a sufficiently general manner as to
+permit running benchmarks with a large number of iterations.
+
+As a result, I moved the project from GNU Prolog to SWI-Prolog:
+    http://www.swi-prolog.org/
+a mature Prolog system which properly supports tail call
+optimisation.  I used Linux version 7.6.0-rc2, which is a stable
+and complete implementation of Prolog, using the 64-bit Ubuntu
+installation package.
+
+Development of the program was straightforward, with the only
+speed bumps my coming to terms with the Prolog way of doing
+things.  This program constitutes an "abuse of language" almost
+as extreme as the COBOL version.  Prolog is intended for logic
+programming where its underlying inference engine does most of
+the work in resolving queries where the programmer specifies a
+way to find the answer but not the details of how it is to be
+evaluated.  Optical design ray tracing couldn't be more
+different--the computations must be evaluated procedurally, so I
+ended up using Prolog as a functional programming langauge,
+writing procedural code as AND expressions within rules, while
+taking advantage of Prolog's polymorphism and pattern matching
+to make the code more expressive of the problem being solved. 
+Since Prolog provides full support for floating point arithmetic
+and trigonometric functions, there were no problems in
+evaluating the expressions used in the benchmark.
+
+After testing the benchmark in SWI-Prolog for accuracy, I ran
+the Prolog benchmark for 13,725,893 iterations and obtained the
+following run times in seconds for five runs:
+    287.14
+    286.64
+    288.11
+    288.15
+    286.38
+These runs give a mean time of 287.284 seconds, or 20.9301
+microseconds per iteration.
+
+I then ran the C benchmark for 166,051,660 iterations, yielding
+run times of:
+    296.89
+    296.37
+    296.29
+    296.76
+    296.37
+seconds, with mean 296.536, for 1.7858 microseconds per
+iteration.
+
+Dividing these gives a SWI-Prolog run time of 11.7203 longer
+than that of C.  In other words, for this benchmark, SWI-Prolog
+runs around 11.72 times slower than C.
+
+I next wanted to compare GNU Prolog with C.  Because of the lack
+of tail call optimisation, I was unable to run the benchmark for
+the required number of iterations to obtain an "on the record"
+run of about five minutes (even when I tried tricks of nesting
+iterations in calls), so I estimated its performance as follows.
+
+I ran the benchmark on GNU Prolog with 450000 iterations, which
+was the maximum I could use after setting "export
+GLOBALSZ=80000000000" to create an enormous global stack.  I
+received the following timings in seconds:
+    4.37
+    4.36
+    4.41
+    4.33
+    4.32
+of which the mean is 4.358 seconds.
+
+Then, I ran the same benchmark under SWI-Prolog and measured:
+    8.90
+    8.80
+    8.79
+    8.99
+    8.96
+for a mean of 8.888.  This gives a run time ratio of GNU Prolog
+to SWI-Prolog of 0.49032, and applying this to the measured
+ratio of SWI-Prolog to C, we can infer a ratio of GNU Prolog to
+C of 5.7467.
+
+I do not report this as a primary benchmark for GNU Prolog
+because its lack of tail call optimisation prevented it from
+fulfilling the conditions of the benchmark: a run of around five
+minutes.  It is, however, indicative of the performance of
+Prolog which can be obtained by compiling to native code, and is
+included because it demonstrates that Prolog can perform within
+the range of other compiled languages.
+
+In summary, Prolog did pretty well on this job for which it
+wasn't designed.  The program is straightforward and readable,
+and the performance in SWI-Prolog is comparable to other
+languages which compile to byte code, as does this Prolog
+implementation.  GNU Prolog, which compiles to native machine
+code, performed better than GNU Common Lisp in compiled mode,
+but toward the slow end of machine code compilers (but, since
+the full benchmark could not be run, the GNU Prolog results are
+not archival).
+
+This directory includes a Makefile which can build the benchmark
+using either SWI-Prolog of GNU Prolog (which, of course, must be
+installed on your machine).  The SWI-Prolog version of the
+benchmark uses that system's nonstandard three argument format/3
+predicate to print its results to Prolog atoms, allowing the
+program to perform its own accuracy test at the completion of
+the benchmark.  GNU Prolog and the ISO standard do not implement
+this extension, so alternative code is used which simply prints
+the output of the last iteration of the benchmark to standard
+output where it is compared with the expected results with diff.

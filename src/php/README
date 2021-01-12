@@ -1,0 +1,88 @@
+
+                  PHP Floating Point Benchmark
+                       Development Notes
+                       January 22nd, 2018
+
+PHP is a brutal hack of a language created by bashing together
+HTML and a bastardised flavour of Perl which is just enough like
+Perl to trick you into thinking you know it, only to pull the
+rug out from under you whenever you become complacent.  PHP is
+the foundation of vast snowdrifts of incomprehensible spaghetti
+code which adorns many Web sites, and has been the wellspring of
+innumerable security holes in those sites.
+
+I wouldn't let PHP anywhere near my own www.fourmilab.ch Web
+site, but I have to deal with it in mantaining a WordPress-based
+site I help to administer.  Having been forced to wallow with
+the pig, I decided to add PHP to the list of FBENCH languages.
+
+The implementation is a relatively straightforward port of the
+Perl version of the program, modified to be embedded within a
+Web page and adapted to the differences between Perl and PHP in
+handling things such as variable scope in functions, declaration
+(or non-declaration) of variables, and the structure of arrays.
+
+As the reference, I started with the C version, compiled with
+GCC 5.4.0, and run for 166,051,660 iterations.  Run times in
+seconds were (296.89, 296.37, 296.29, 296.76, 296.37) for a mean
+time of 296.536, or 1.7858 microseconds per iteration.
+
+I then made five timing runs on the same machine, using the PHP
+command line interpreter version 7.0.22.  I ran the benchmark
+for 32,952,075 iterations, having calculated that number from a
+previous timing run to yield a run time of around five minutes. 
+The timings in seconds and microseconds per iteration were:
+    295.320     8.9621
+    295.135     8.9565
+    297.174     9.0184
+    296.037     8.9839
+    297.098     9.0161
+for a mean of 296.153 seconds or 8.9874 microseconds per
+iteration.
+
+Comparing the two measurements of time per iteration, PHP is
+thus 5.033 times slower than C.  Interestingly, this is much
+faster than Perl, which usually benchmarks more than twenty
+times slower than C.
+
+I then verified that the same Web page can be run on a Web
+server with PHP.  Since the machine on which I ran the test had
+a different type of CPU than the development machine on which I
+made the timing tests above, I did not compare execution time.
+
+
+               Notes on Running the Benchmark
+               ------------------------------
+
+The benchmark is supplied as the fbench.php file.  This is a Web
+page, compliant with the XHTML 1.0 Strict standard, with PHP
+embedded to implement the benchmark.  It can be run either from
+the command line using the PHP interpreter, or by installing it
+on a Web site which supports PHP.  The iteration count defaults
+to 100000.  You can specify the iteration count when running
+from the command line as the first argument, for example:
+
+    php fbench.php 250000 >fbench.html
+    
+to run 250000 iterations and write the resulting HTML in the
+file fbench.html, which may then be viewed with a Web browser
+using a "file:" URL.
+
+If you install fbench.php on a Web server with PHP, you can run
+it and specify the iteration count with a URL like:
+
+    http://www.example.com/path/to/fbench.php?iterations=250000
+    
+In this case your Web browser will directly display the results
+of the benchmark.
+
+The benchmark program displays the result of the last iteration
+of the computation, reports any discrepancies from the reference
+results, and reports the timing, both in seconds elapsed and
+microseconds per iterations.  Timing is done using the PHP
+microtime(true) function, which reports wall clock time in
+seconds and microseconds.  Archival runs should be done on an
+idle system with the iteration count adjusted to produce a run
+time around five minutes.  (When running from a Web server, you
+may have to reduce the run time to avoid having the request time
+out.)

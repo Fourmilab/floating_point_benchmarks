@@ -1,0 +1,16 @@
+                       Focal Length          Angle to Axis
+Marginal ray         47.09479120920           .04178472683
+Paraxial ray         47.08372160249           .04177864821
+
+Longitudinal spherical aberration:         -.01106960671
+    (Maximum permissible):                  .05306749907
+                                             Acceptable
+
+Offense against sine condition (coma):      .00008954761
+    (Maximum permissible):                  .00250000000
+                                             Acceptable
+
+Axial chromatic aberration:                 .00448229032
+    (Maximum permissible):                  .05306749907
+                                             Acceptable
+

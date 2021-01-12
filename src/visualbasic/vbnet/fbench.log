@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UpgradeLog>
+    <Settings>
+        <Setting
+            Name = "LogFile"
+            Value = "fbench.log"
+        />
+        <Setting
+            Name = "GenerateInterfacesForClasses"
+            Value = "FALSE"
+        />
+        <Setting
+            Name = "ProjectName"
+            Value = "fbench"
+        />
+        <Setting
+            Name = "OutputName"
+            Value = "fbench.vbproj"
+        />
+        <Setting
+            Name = "OutputDir"
+            Value = "F:\Projects\fbench\vb\JW_FBENCH\VB6\Fbench.NET"
+        />
+        <Setting
+            Name = "ProjectPath"
+            Value = "F:\Projects\fbench\vb\JW_FBENCH\VB6\fbench.vbp"
+        />
+        <Setting
+            Name = "MigrateProjectTo"
+            Value = "0"
+        />
+    </Settings>
+    <File
+        OldPath = "F:\Projects\fbench\vb\JW_FBENCH\VB6\fbench.frm"
+        NewPath = "F:\Projects\fbench\vb\JW_FBENCH\VB6\Fbench.NET\fbench.vb"
+        FileType = "Form"
+        Upgraded = "True"
+    >
+        <Section Name = "Form_Resize" >
+            <Issue
+                Type = "Runtime"
+                Number = "2075"
+                ObjectType = "Form"
+                PME = "Resize"
+            >Event Form1.Resize may fire when form is intialized.</Issue>
+        </Section>
+    </File>
+    <File
+        OldPath = "F:\Projects\fbench\vb\JW_FBENCH\VB6\fbench.bas"
+        NewPath = "F:\Projects\fbench\vb\JW_FBENCH\VB6\Fbench.NET\modFBENCH.vb"
+        FileType = "Module"
+        Upgraded = "True"
+    />
+    <File
+        OldPath = "F:\Projects\fbench\vb\JW_FBENCH\VB6\fbench_lib.bas"
+        NewPath = "F:\Projects\fbench\vb\JW_FBENCH\VB6\Fbench.NET\fbench_lib.vb"
+        FileType = "Module"
+        Upgraded = "True"
+    />
+</UpgradeLog>
+

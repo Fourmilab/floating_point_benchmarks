@@ -1,0 +1,213 @@
+
+               JavaScript Floating Point Benchmark
+                       Development Notes
+                       October 2nd, 2017
+
+This JavaScript benchmark was originally developed in 2005 and
+browser timing tests were run in 2005 and 2006.  At the time,
+most implementations of JavaScript were pure interpreters or
+interpreters of a byte-code representation, and their
+performance reflected this.  With the run time of the C
+benchmark taken as 1, JavaScript ran anywhere from 27.6 (Opera
+8.0) to 46.9 (Mozilla Firefox 1.0.6) times slower.
+
+What a difference a decade makes!  The JavaScript engines in the
+leading modern browsers use optimisation and techniques such as
+just-in-time compilation to deliver performance which is often
+competitive with languages that compile to machine code.  This
+is what permitted me to re-implement Cellular Automata
+Laboratory as an application which ran entirely within the
+browser, eliminating the need for a separate programming
+language environment.  Having observed how well JavaScript
+performed in that project, it was clear that the time had come
+to revisit the language and compare contemporary implementations
+with C.
+
+The benchmark is essentially unchanged from the one run in
+2005.  I have added some declarations of variables to make the
+code compliant with "use strict", added some comments to the
+code, and included a main program which allows the benchmark to
+run from the command line under node.js, but there are no
+changes to the code which is timed when running the benchmark.
+Comparisons to the execution time of the C benchmark were made
+against a version compiled with GCC 5.4.0.  A recent release of
+the mathematical function library for GCC appears to have
+dramatically slowed down the trigonometric functions, apparently
+in the interest of last-bit accuracy, perhaps by as much as a
+factor of two compared to previous libraries.  That should be
+kept in mind when considering the comparisons with JavaScript
+implementations.  The change to the C library trigonometric
+functions made no difference in the results computed by the
+benchmark, which are verified to 13 significant digits.
+
+A variety of JavaScript engines are used by current browsers.
+One would expect that performance in a JavaScript benchmark
+among browsers which share the same engine would be about
+the same, and the results confirm this.  There are, however,
+dramatic differences among engines.
+
+For each JavaScript implementation, I ran the benchmark five
+times on an idle machine, using an iteration count calculated
+to result in a run time of approximately five minutes.  I then
+computed the mean time of the five runs and divided by the
+iteration count to obtain the run time in microseconds per
+iteration.
+
+As the reference, I started with the C version, compiled with
+GCC 5.4.0, and run for 166,051,660 iterations.  Run times in
+seconds were (296.89, 296.37, 296.29, 296.76, 296.37) for a mean
+time of 296.536, or 1.7858 microseconds per iteration.
+
+The first test I ran was with Node.js v6.11.3.  This is a
+command line environment which uses the V8 JavaScript engine
+also used by Google Chrome.  I ran 112,697,692 iterations and
+measured run times in seconds of (300.001, 300.542, 300.850,
+301.022, 302.053) with a mean of 300.8936, and 2.6699
+microseconds per iteration.  This is 1.4951 times slower than C.
+
+Next was Google Chrome version 61.0.3163.91, which was run for
+119,019,281 iterations with timings of (293.573, 293.420,
+292.188, 292.740, 292.939) with a mean of 292.972 seconds and
+2.4616 microseconds per iteration, which is 1.3784 times slower
+than C.
+
+I then tested Chromium, the free version of the browser upon
+which Google Chrome is built, version 60.0.3112.113, and as
+expected, the results were almost identical: 1.3863 times slower
+than C.
+
+The Brave browser is derived from the Chromium code base and
+thus inherits its V8 JavaScript engine.  Version 0.18.36 was a
+little bit faster in the tests, coming in at 1.3336 times slower
+than C.
+
+So far, the results were pretty much consistent with what I'd
+observed during the Cellular Automata Laboratory project:
+JavaScript performs at a speed competitive to compiled
+languages or the better byte code languages, and is suitable
+for all but the most computationally-intense tasks.
+
+Next up was Mozilla Firefox, which was now on version 55.0.2, a
+long way from the 1.0.6 I tested in 2005.  Firefox uses its own
+JavaScript engine called Rhino, which is written in Java and
+compiles JavaScript into Java bytecode, which is executed with a
+just-in-time compiler.  When I ran the benchmark, I could
+scarcely believe my eyes.  I had to use an iteration count of
+457,577,013 (yes, nearly half a billion) to achieve a run time
+around five minutes.  I measured run times of (303.958, 303.255,
+303.683, 304.136, 304.283) seconds with a mean of 393.863, or
+0.6641 microseconds per iteration. This is simply stunning: the
+ratio of run time to C is 0.3719 or, taking the reciprocal,
+JavaScript in Firefox ran the benchmark almost 2.7 times faster
+than C, compiled with GCC to native 64-bit Intel machine code in
+full optimising mode.
+
+What's going on here?  My guess is that we're seeing the poor
+performance of the new GCC trigonometric function libraries
+taking their toll.  Fbench is far more intense in its use of
+trigonometric functions than even most other scientific
+software, so a slow implementation of these functions will show
+up strongly in the results.  I suspect the Java engine which
+ultimately runs the JavaScript code of the benchmark uses
+different libraries which, although perhaps less accurate (but
+entirely adequate for this program), run much faster than those
+now used by GCC.
+
+The final test was a little bit more involved, since it tested
+Apple's Safari browser which uses a JavaScript engine called
+Nitro that is part of the WebKit framework.  Current releases
+incorporate just-in-time compilation to machine code.  In order
+to time this browser, I had to run it on a Macintosh Pro instead
+of the Dell laptop running Xubuntu Linux on which all the other
+tests were run.  The Macintosh dates from 2008, and is
+substantially slower than the Dell machine.  To adjust results
+to compensate for this speed difference, I ran the Perl version
+of the benchmark on the two machines and divided the run times
+to obtain the speed ratio between them.  Since the Perl
+benchmark was identical and the two machines were running
+comparable versions of Perl, this provides a reasonable estimate
+of their relative performance.  Running the benchmark in Safari
+11.0 (11604.1.38.1.7), it immediately became clear this was
+another fast one.  I needed an iteration count of 177,542,107 to
+obtain the desired run time of around five minutes, and I
+measured the following times: (299.428, 299.418, 299.417,
+299.439, 299.400) for a mean of 299.4204 seconds and 1.6865
+microseconds per iteration.  But since this machine is less than
+half the speed of the Dell, this must be multiplied by the speed
+ratio of 0.4487 to obtain an equivalent time of 0.7567
+microseconds per iteration had the Macintosh been as fast as the
+machine on which the other benchmarks were run.  This works out
+to a run time ratio of 0.4237 compared to C, or about 2.36 times
+faster than C; in the same ballpark as Firefox and much faster
+than the V8-based systems.
+
+Here is a table summarising the results, ranked from fastest
+to slowest.
+
+  Browser/System     JavaScript Engine    Run Time vs. C
+  =================  =================    ==============
+  Mozilla Firefox         Rhino               0.3719
+  Safari (Mac OS X)       Nitro               0.4237
+  Brave                   V8                  1.3336
+  Google Chrome           V8                  1.3784
+  Chromium                V8                  1.3863
+  Node.js                 V8                  1.4951
+
+Just out of curiosity, I compared the benchmark's run time on
+the Safari 11 desktop browser on MacOS with the mobile version
+of Safari supplied with iOS 10.3.3 on the iPad.  The iPad tests
+were run on an iPad Air model A1474 with 128 Gb storage.  I ran
+the benchmark with 62,877,263 iterations to obtain the following
+run times in seconds: (297.678, 297.455, 297.784, 297.526,
+297.422) for a mean of 297.573 and 4.7326 microseconds per
+iteration.  This was 2.8 times slower than Safari on the
+Macintosh Pro, but if we correct for the speed of that 2008
+machine versus current machines, we find the iPad is about 6.25
+times slower than the desktop/laptop machine.  This is
+consistent with the performance I've observed when trying to run
+compute-intensive tasks such as Cellular Automata Laboratory on
+the iPad.  My iPad is a 2013 model; I don't know if newer models
+perform better or, if so, by how much.
+
+
+               Notes on Running the Benchmark
+               ------------------------------
+
+If you view the HTML benchmark page from a file: URL, the XHTML
+validator button will not work because there is no HTTP referrer
+for a local page.  You can validate a local page by uploading it
+to the validator or by pasting it into the validator's direct
+input box.
+
+Here is how to disable the "unresponsive page" or script warning
+in various browsers. You'll need to do this to run benchmarks
+with a large number of iterations without having pop-ups appear
+which pause execution.  This information was collected from
+experiments with current versions of these browsers in October,
+2017.  It may change in subsequent releases.
+
+    Google Chrome, Chromium, and other Chromium-based browsers:
+        Start the browser from the command line with the switch:
+            --disable-hang-monitor
+        Alternatively, open the [three dots]/More
+        tools.../Developer tools window, select the Console tab,
+        and then ignore it.  This turns off the warning.
+
+    Mozilla Firefox
+        Display the "about:config" page, then search for
+            dom.max_script_run_time
+        whose default is 10 seconds.  Modify this value to the
+        desired new timeout value, such as more than 300 seconds
+        for an archival benchmark run.
+
+    Brave
+        Does not appear to have a timeout.
+
+    Safari (on MacOS X)
+        Does not appear to have a timeout.
+
+The fbench.js file can either be invoked by the fbench.html page
+or run from the command line with node.js, specifying the number
+of iterations as a command line argument, for example:
+    nodejs fbench.js 1000000
+to run one million iterations.

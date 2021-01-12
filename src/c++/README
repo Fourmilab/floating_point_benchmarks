@@ -1,0 +1,195 @@
+                 C++ Floating Point Benchmark
+                      Development Notes
+                     November 2nd, 2017
+
+This directory contains an implementation of the Fourmilab
+floating point benchmark in C++.  It is, of course, possible to
+compile the ANSI C version of the benchmark (c/fbench_ansi.c in
+this distribution) with a C++ compiler, as almost any ANSI C
+program is a valid C++ program, but this program is a complete
+rewrite of the benchmark algorithm in C++, using the features of
+the language as they were intended to improve the readability,
+modularity, and generality of the program.  As with all versions
+of the benchmark, identical results are produced, to the last
+decimal place, and the results are checked against a reference
+to verify correctness.
+
+This benchmark was developed to explore whether writing a
+program using the features of C++ imposed a speed penalty
+compared to the base C language, and also to explore the
+relative performance of four different implementations of
+floating point arithmetic and mathematical function libraries,
+with different precision.  The operator overloading features of
+C++ make it possible to easily port code to multiple precision
+arithmetic libraries without the cumbersome and error-prone
+function calls such code requires in C.
+
+The resulting program is object-oriented, with objects
+representing items such as spectral lines, surface boundaries in
+an optical assembly, a complete lens design, the trace of a ray
+of light through the lens, and an evaluation of the aberrations
+of the design compared to acceptable optical quality standards.
+Each object has methods which perform computation related to its
+contents. All floating point quantities in the program are
+declared as type Real, which is typedef-ed to the precision
+being tested.  The precision is selected by definitions on the
+compiler command line, as follows:
+
+    Definitions                 Precision
+    -lm                         double (IEEE 64 bit)
+    -DLONG_DOUBLE=1 -lm         long double (Intel 80 bit extended)
+    -DFLOAT128=1 -lquadmath     GNU libquadmath (128 bit)
+    -DFLOAT_MPFR=1 -DMPFR_PRECISION=n -lgmp -lmpfr   GNU MPFR (n bit)
+
+The numbers supported by FLOAT128 and FLOAT_MPFR modes cannot be
+directly converted to strings by snprintf() format phrases, so
+when compiling with these options auxiliary code is generated to
+use those packages' facilities for conversion to strings.  In a
+run of the benchmark which typically runs hundreds of thousands
+or millions of executions of the inner loop, this code only
+executes once, so it has negligible impact on run time.
+
+I first tested the program with conventional double arithmetic.
+As always, I do a preliminary run and time it, then compute an
+iteration count to yield a run time of around five minutes. I
+then perform five runs on an idle system, time them, and compute
+the mean run time.  Next, the mean time is divided by the
+iteration count to compute microseconds per iteration. Here are
+the runs compiled to use doubles.  All tests were done with
+GCC/G++ 5.4.0.
+
+    double  -O3  182,592,818 iterations
+        306.30 seconds
+        306.48
+        306.32
+        306.20
+        305.97
+    Mean: 306.254  1.67725 usec/iter
+
+To compare this with the reference of C, I ran the C benchmark
+as follows.
+
+    fbench_ansi.c compiled with gcc -O3  166,051,660 iterations
+        296.89
+        296.37
+        296.29
+        296.76
+        296.37
+    Mean 296.536  1.7858 usec/iter
+
+Thus, the C++ time was 0.9392 of the C run time.  Not only
+didn't we pay a penalty for using C++, we actually picked up
+around 6% in speed.  Presumably, the cleaner structure of the
+code allowed the compiler to optimise a bit better whereas the
+global variables in the original C program might have prevented
+some optimisations.
+
+Next I tested with a "long double" data type, which uses the 80
+bit internal representation of the Intel floating point unit. I
+used the same iteration count as with the original "double"
+test.
+
+    long double  -O3  182,592,818 iterations
+        313.93
+        314.90
+        314.36
+        313.58
+        314.19
+    Mean: 314.19  1.72071 usec/iter
+
+Here, the run time was 0.9636 that of C, still faster, and not
+that much longer than "double".  If the extra precision of long
+double makes a difference for your application, there's little
+cost in using it.  Note that support for long double differs
+from compiler to compiler and architecture to architecture:
+whether it's available and, if so, what it means depends upon
+which compiler and machine you're using.  These test results
+apply only to GCC on the x86 (actually x86_64) architecture.
+
+GCC also provides a nonstandard data type, "__float128", which
+implements 128 bit (quadruple precision) floating point
+arithmetic in software.  The libquadmath library:
+    https://gcc.gnu.org/onlinedocs/libquadmath/index.html
+includes its own mathematical functions which end in "q" (for
+example sinq instead of sin), which must be called instead of
+the standard library functions, and a quadmath_snprintf function
+for editing numbers to strings.  The benchmark contains
+conditional code and macro definitions to accommodate these
+changes.  The result of the benchmark run was:
+
+    __float128  -O3  5238649 iterations
+        289.90
+        290.30
+        288.93
+        289.92
+        291.15
+    Mean 290.04  55.3654 usec/iter
+
+This was 31.0031 times slower than C.  Here, we pay a heavy
+price for doing every floating point operation in software
+instead of using the CPU's built in floating point unit.  If you
+have an algorithm which requires this accuracy, it's important
+to perform the numerical analysis to determine where the
+accuracy is actually needed and employ quadruple precision only
+where necessary.
+
+Finally, I tested the program built with the GNU MPFR
+multiple-precision library:
+    http://www.mpfr.org/
+which is built atop the GMP package:
+    https://gmplib.org/
+I used the MPFR C++ bindings:
+    http://www.holoborodko.com/pavel/mpfr/
+developed by Pavel Holoborodko, which overload the arithmetic
+operators and define versions of the mathematical functions
+which make integrating MPFR into a C++ program almost seamless.
+As with __float128, the output editing code must be rewritten to
+accommodate MPFR's toString() formatting mechanism. MPFR allows
+a user-selected precision and rounding mode. I always use the
+default round to nearest mode, but allow specifying the
+precision in bits by setting MPFR_PRECISION when the program is
+compiled.  I started with a precision of 128 bits, the same as
+__float128 above.
+
+    MPFR  -O3 -DMPFR_PRECISION=128  869061 iterations
+        293.29
+        295.84
+        296.58
+        293.78
+        292.69
+    Mean 294.44  338.802 usec/iter
+
+This is 189.72 times slower than C.  The added generality of
+MPFR over __float128 comes at a steep price.  Clearly, if 128
+bits suffices for your application, __float128, is the way to
+go.
+
+Next, I wanted to see how run time scaled with precision.  I
+rebuilt for 512 bit precision and obtain the following results.
+
+    MPFR  -O3 -DMPFR_PRECISION=512  329308 iterations
+        293.30
+        292.90
+        294.78
+        295.86
+        292.98
+    Mean 293.96  892.659 usec/iter
+
+Now we're 499.865 times slower than C--almost exactly 1/500 the
+speed.  This is great to have if you really need it, but you'd
+be wise to use it sparingly.
+
+Here is a summary of run time ratios compared to C:
+
+      C++/C
+    double          0.9392
+    long double     0.9636
+    __float128     31.0031
+    MPFR (128)    189.7200
+    MPFR (512)    499.8650
+
+The program produced identical output for all choices of
+floating point precision.  By experimentation, I determined that
+I could reduce MPFR_PRECISION to as low as 47 without getting
+errors in the least significant digits of the results.  At 46
+bits and below, errors start to creep in.

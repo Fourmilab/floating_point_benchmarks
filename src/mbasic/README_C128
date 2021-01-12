@@ -1,0 +1,71 @@
+The fbench_c128.bas program will run on BASIC 7.0 on the
+Commodore 128.  Unfortunately, this implementation of BASIC only
+provides 10 significant digits of accuracy for floating point
+computations.  Consequently, the results of the computation do
+not agree with the canonical results in the lower-order digits,
+and thus do not pass the accuracy test required to be reported.
+
+The result of running the program is as follows.
+
+                            FOCAL LENGTH       ANGLE TO AXIS
+MARGINAL RAY               47.09479110000      0.04178472690
+PARAXIAL RAY               47.08372150000      0.04177864830
+
+LONGITUDINAL SPHERICAL ABERRATION:    -0.01106962560
+    (MAXIMUM PERMISSIBLE):             0.05306749890    ACCEPTABLE
+
+OFFENSE AGAINST SINE CONDITION (COMA): 0.00008954690
+    (MAXIMUM PERMISSIBLE):             0.00250000000    ACCEPTABLE
+
+AXIAL CHROMATIC ABERRATION:            0.00448255241
+    (MAXIMUM PERMISSIBLE):             0.05306749890    ACCEPTABLE
+
+Correct results to the last digit would be:
+
+                            FOCAL LENGTH       ANGLE TO AXIS
+MARGINAL RAY               47.09479120920      0.04178472683
+PARAXIAL RAY               47.08372160249      0.04177864821
+
+LONGITUDINAL SPHERICAL ABERRATION:     -0.01106960671
+    (MAXIMUM PERMISSIBLE):              0.05306749907    ACCEPTABLE
+
+OFFENSE AGAINST SINE CONDITION (COMA):  0.00008954761
+    (MAXIMUM PERMISSIBLE):              0.00250000000    ACCEPTABLE
+
+AXIAL CHROMATIC ABERRATION:             0.00448229032
+    (MAXIMUM PERMISSIBLE):              0.05306749907    ACCEPTABLE
+
+As you can see, the most significant digits are correct, but the
+limited precision induces errors in the least significant
+digits.
+
+The program is supplied in lower case ASCII, as that is what the
+VICE emulator expects to be pasted into its console window.
+
+Under the VICE x128 emulator on my development machine, 36
+iterations ran for:
+      292.77
+      292.95
+      292.68
+      292.56
+      292.47
+Mean: 292.69  8132472 usec/iteration
+
+C:
+Mean: 296.536 1.7858 usec/iteration
+
+Run time ratio compared to C: 4,553,966
+
+Now we can compare against run time from the 1980s of the C-128
+C port, with Abacus Software/Data-Becker Super-C 128, version
+3.00. This ran 1000 iterations in 3466 seconds, or 3466000
+microseconds per iteration, which is 2.35 times faster than the
+simulated BASIC. The Super-C test was running in "fast" (2 MHz
+mode), while I'm not sure about the BASIC (when I try to put the
+simulator into fast mode, it hangs and requires a reset).  The
+C128 C version had similar errors in the least significant
+digits.
+
+The only thing that can be learned from this exercise is that
+the benchmark is effective in detecting floating point
+implementations which provide insufficient precision.

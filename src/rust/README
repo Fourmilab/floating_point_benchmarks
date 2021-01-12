@@ -1,0 +1,36 @@
+                     Rust Floating Point Benchmark
+                           Development Notes
+                          October 25th, 2014
+
+This directory contains an implementation of the Fourmilab floating
+point benchmark in Rust,
+
+    http://www.rust-lang.org/
+
+Rust is a systems programming language currently under development.
+It attempts to provide performance comparable to low-level
+programming languages such as C and C++ while avoiding common
+causes of crashes and security problems such as subscript and
+pointer errors, dangling pointers, memory leaks, and multi-thread
+race conditions.
+
+As a language under active development, it is a moving target and
+any program written for a given version may require modification
+as the language and libraries evolve.  The program in this directory
+was developed and tested using Rust 0.13.0 on an x86_64 machine
+running Xubuntu kernel 3.13.0-32.  In order to compile and run
+this program you must install the "rustc" and "cargo" programs on
+your computer.  Installation instruction are found in the Rust Guide:
+
+    http://doc.rust-lang.org/guide.html
+
+Timing tests were run having built the program with the --release
+option which enables code optimisation.  The Rust benchmark was run
+five times on a quiescent machine with the iteration count adjusted to
+yield a run time of about five minutes.  Then the process was repeated
+for the reference C implementation.  Comparison of the mean run time
+per iteration yielded a Rust run time of 1.077 as compared to C's run
+time of 1.
+
+The subdirectory "fbench" contains a complete Rust project for the
+benchmark.  The source code is in the file fbench/src/main.rs.

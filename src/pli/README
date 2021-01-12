@@ -1,0 +1,245 @@
+                      PL/I Floating Point Benchmark
+                            Development Notes
+                          September 24th, 2017
+
+This directory contains an implementation of the Fourmilab
+floating point benchmark in PL/I.
+
+I have always had a fondness for PL/I.  Sure, it was an
+archetypal product of IBM at the height of the supremacy of Big
+Blue, and overreached and never completely achieved its goals,
+but it was a product of the 1960s, when technological ambition
+imagined unifying programming languages as diverse as Fortran,
+COBOL, and Algol into a single language which would serve for
+all applications and run on platforms ranging from the most
+humble to what passed for supercomputers at the time. It was the
+choice for the development of Multics, one of the most ambitious
+operating system projects of all time (and, after its wave of
+enthusiasm broke on the shore of reality, inspired Unix), and
+the C language inherits much of its syntax and fundamentals from
+PL/I.
+
+Few people recall today, but the first version of AutoCAD
+shipped to customers was written in PL/I.  When we were
+developing AutoCAD in 1982, we worked in parallel, using Digital
+Research's PL/I-80 (a subset of PL/I, but completely adequate
+for the needs of AutoCAD) on 8080/Z-80 CP/M systems and C on
+8086/8088 machines.  As it happened, AutoCAD-80, the PL/I
+version, shipped first, so the first customer who purchased
+AutoCAD received a version written in PL/I.
+
+The goal of PL/I was the grand unification of programming
+languages, which had bifurcated into a scientific thread
+exemplified by Fortran and variants of Algol and a commercial
+thread in which COBOL was dominant.  The idea was that a single
+language, and a single implementation would serve for all, and
+that programmers working in a specific area could learn the
+subset applicable to their domain, ignoring features irrelevant
+to the tasks they programmed.
+
+By the standards of the time, the language feature set was
+ambitious. Variables could be declared in binary or decimal,
+fixed point or floating, with variable precision.  Complex
+structures and arrays could be defined, including arrays of
+structures and structures containing arrays.  A variety of
+storage classes were available, allowing the creation of
+dynamically or manually allocated storage, and access through
+pointers.  Support for recursive procedures and reentrant code
+was included.  The language was defined before the structured
+programming craze, but its control structures are adequate to
+permit structured programming should a programmer choose that
+style.  Object orientation was undreamt of at the time, and
+support for it was added only much later.
+
+Iron Spring software:
+    http://www.iron-spring.com/
+is developing a reasonably complete implementation of PL/I which
+runs on Linux and OS/2.  It adheres to ANSI standard X3.74-1987
+(ISO/IEC 6522:1992), the so-called "Subset G" of the language,
+but, in its present beta releases, does not support all features
+of the standard,  The current state of the beta version is
+documented in the Programming Guide:
+    http://www.iron-spring.com/prog_guide.html
+With one exception (the ASIN mathematical builtin function),
+none of the missing features are required by the floating point
+benchmark, and ASIN is easily emulated by the identity
+(expressed in PL/I):
+    asin(x) = atan(x, sqrt(1 - (x * x)))
+implemented as a procedure in the program.
+
+The Iron Spring PL/I compiler is closed source, and will be
+offered for sale upon general release, but during the beta
+period downloads are free.  The runtime libraries (much of which
+are written in PL/I) are open source and licensed under the GNU
+Lesser General Public License (LGPL).  There are no restrictions
+or licenses required to redistribute programs compiled by the
+compiler and linked with its libraries.
+
+This version of the benchmark was developed using the 0.9.9b
+beta release of the Iron Spring PL/I compiler.  Current Linux
+downloads are 32-bit binaries and produce 32-bit code, but work
+on 64-bit systems such as the one on which I tested it.  It is
+possible that a native 64-bit version of the compiler and
+libraries might outperform 32-bit code run in compatibility
+mode, but there is no way at present to test this.
+
+The PL/I implementation of Fbench is a straightforward port
+derived from the Ada version of the program, using the same
+imperative style of programming and global variables.  All
+floating point values are declared as FLOAT BINARY(49), which
+maps into IEEE double-precision (64 bit) floating point.  As
+noted above, the missing ASIN (arc sine) builtin function was
+emulated by an internal procedure named l_asin to avoid conflict
+with the builtin on compilers which supply it.
+
+Development of the program was straightforward, and after I
+recalled the idioms of a language in which I hadn't written code
+for more than thirty years, the program basically worked the
+first time.  Support for the PUT STRING facility allowed making
+the program self-check its results without any need for user
+interaction.  To avoid nonstandard system-dependent features,
+the iteration count for the benchmark is compiled into the
+program.
+
+After I get the benchmark running and have confirmed that it
+produces the correct values, I then time it with an modest
+iteration count, then adjust the iteration count to obtain a run
+time of around five minutes, which minimises start-up and
+termination effects and accurately reflects execution speed of
+the heart of the benchmark.  Next, I run the benchmark five
+times on an idle system, record the execution times, compute the
+mean value, and from that calculate the time in microseconds per
+iteration.  This is then compared with the same figure from runs
+of the C reference implementation of the benchmark to obtain the
+relative speed of the language compared to C.
+
+When I first performed this process, it was immediately apparent
+that something had seriously gang agley.  The C version of the
+benchmark ran at 1.7858 microseconds per iteration, while the
+PL/I implementation took an aching 95.1767
+microseconds/iteration--fully 53 times slower!  This was, in its
+own way, a breathtaking result.  Most compiled languages come in
+between somewhere between the speed of C and four times slower,
+with all of the modern heavy-hitter languages (Fortran, Pascal,
+Swift, Rust, Java, Haskell, Scala, Ada, and Go) benchmarking no
+slower than 1.5 times the C run time. Most interpreted languages
+(Perl, Python, Ruby) still benchmark around twice as fast as
+this initial PL/I test.  It was time to start digging into the
+details.
+
+First of all, I made sure that all of the floating point
+variables were properly defined and didn't, for example, declare
+variables as fixed decimal.  When I tried this with the COBOL
+version of the benchmark, I indeed got a comparable execution
+time (46 times slower than C).  But the variables were declared
+correctly, and examination of the assembly language listing of
+the code generated by the compiler confirmed that it was
+generating proper in-line floating-point instructions instead of
+some horror such as calling library routines for floating point
+arithmetic.
+
+Next, I instrumented the program to verify that I hadn't
+blundered and somehow made it execute more iterations of the
+inner loop than were intended.  I hadn't.
+
+This was becoming quite the mystery.  It was time to take a
+deeper look under the hood.  I downloaded, built, and installed
+OProfile:
+    http://oprofile.sourceforge.net/about/
+a hardware-supported statistical profiling tool which, without
+support by the language (which is a good thing, because the PL/I
+compiler doesn't provide any) allows measurement of the
+frequency of instruction execution within a program run under
+its supervision. I ran the benchmark for five minutes under
+OProfile:
+    operf ./fbench
+(because the profiling process uses restricted kernel calls,
+this must be done as the super-user), and then annotated the
+results with
+    opannotate --source --assembly fbench >fbench.prof
+
+The results were flabbergasting.  I was flabber-aghast to
+discover that in the entire five minute run, only 5.6% of the
+time was spent in my benchmark program: all the rest was spent
+in system libraries!  Looking closer, one of the largest time
+sinks was the PL/I EXP builtin function, which was distinctly
+odd, since the program never calls this function.  I looked at
+the generated assembly code and discovered, however, that if you
+use the normal PL/I or Fortran idiom of "x ** 2" to square a
+value, rather than detecting the constant integer exponent and
+compiling the equivalent code of "x * x", the compiler was
+generating a call to the general exponential function, able to
+handle arbitrary floating point exponents.  I rewrote the three
+instances in the program where the "**" operator appeared to use
+multiplication, and when I re-ran the benchmark it was almost
+ten times faster (9.4 times to be precise)!
+
+Examination of the Oprofile output from this version showed that
+44% of the time was spent in the benchmark, compared to 5.6%
+before, with the rest divided mostly among the mathematical
+library builtin functions used by the program.  Many of the
+library functions which chewed up time in the original version
+were consequences of the calls on EXP and melted away when it
+was replaced by multiplication.  Further experiments showed that
+these library functions, most written in PL/I, were not
+particularly efficient: replacing the builtin ATAN function with
+my own implementation ported from the INTRIG version of the C
+benchmark sped up the benchmark by another 6%.  But the goal of
+the benchmark is to test the compiler and its libraries as
+supplied by the vendor, not to rewrite the libraries to tweak
+the results, so I set this version aside and proceeded with
+timing tests.
+
+I ran the PL/I benchmark for 29592068 iterations and obtained
+the following run times in seconds for five runs:
+    299.23
+    300.59
+    298.52
+    300.94
+    298.07
+These runs give a mean time of 299.47 seconds, or 10.1209
+microseconds per iteration.
+
+I then ran the C benchmark for 166051660 iterations, yielding
+run times of:
+    296.89
+    296.37
+    296.29
+    296.76
+    296.37
+seconds, with mean 296.536, for 1.7858 microseconds per iteration.
+
+Dividing these gives a PL/I run time of 5.667 longer than that
+of C.  In other words, for this benchmark, PL/I runs around 5.7
+times slower than C.
+
+This is toward the low end of compiled languages in which the
+benchmark has been implemented.  Among those tested so far, it
+falls between ALGOL 60 (3.95 times C) and GNU Common Lisp
+(compiled, 7.41 times C), and it is more than twice as fast as
+Micro Focus Visual COBOL in floating point mode (12.5 times C).
+It should be remembered, however, that this is a beta test
+compiler under active development, and that optimisation is
+often addressed after full implementation of the language.  And
+since the libraries are largely written in PL/I, any
+optimisation of compiler-generated code will improve library
+performance as well.  The lack of optimisation of constant
+integer exponents which caused the initial surprise in timing
+tests will, one hopes, be addressed in a subsequent release of
+the compiler. Further, the second largest consumer of time in
+the benchmark, after the main program itself with 44%, was the
+ATAN function, with 23.6%.  But the ATAN function is only used
+to emulate the ASIN builtin, which isn't presently implemented.
+If and when an ASIN function is provided, and if its
+implementation is more efficient (for example, using a Maclaurin
+series) than my emulation, a substantial increase in performance
+will be possible.
+
+Nothing inherent in the PL/I language limits its performance.
+Equivalent code, using the same native data types, should be
+able to run as fast as C or Fortran, and mature commercial
+compilers from IBM and other vendors have demonstrated this
+performance but at a price.  The Iron Spring compiler is a
+promising effort to deliver a professional quality PL/I compiler
+for personal computers at an affordable price (and, in its
+present beta test incarnation, for free).

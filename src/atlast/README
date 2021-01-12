@@ -1,0 +1,15 @@
+This is a version of the floating point benchmark which is
+implemented in ATLAST:
+
+    http://www.fourmilab.ch/atlast/
+    
+my FORTH-like language for embedded systems and opening the
+architecture of applications.
+
+This implementation of the benchmark works only on 64-bit (2.x)
+versions of ATLAST, where integers, pointers, and floating
+point values all occupy one stack item.  It is possible to
+convert it to work with a 32-bit version of ATLAST, but you
+will have to use double-item operations for all of the floating
+point values, as on a 32-bit system floating point numbers
+occupy two stack and heap items.

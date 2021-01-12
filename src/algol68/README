@@ -1,0 +1,45 @@
+
+                   Algol 68 Floating Point Benchmark
+                           Development Notes
+                             May 4th, 2014
+                                
+This directory contains an implementation of the floating point benchmark
+in Algol 68, conforming to the standard of the 1973 Revised Report.  This
+program has been tested with the Algol 68 Genie system:
+
+    http://jmvdveer.home.xs4all.nl/
+    
+which is a compiler/interpreter released under the GPL.  As far as I
+can determine, this program uses only standard language features and
+eschews extensions.
+
+The program was ported from the Ada implementation, and the porting
+process was completely straightforward.  I ran timing tests under
+Ubuntu Linux, and after adjusting iteration counts to obtain a run time
+of about five minutes, I ran three runs of the Algol 68 program with
+an iteration count of 10,595,839 with timings in seconds of:
+    298.696
+    299.622
+    301.673
+for a mean time of 299.997 seconds.
+
+For a control, I ran the C implementation of the benchmark for
+157,894,736 iterations, yielding timings of:
+    292.945
+    293.858
+    293.974
+with a mean of 293.592 seconds.
+
+The relative execution time of the benchmark in Algol 68 compared
+to the C reference, then, is:
+
+    (299.997 / 293.592) * (157894736 / 10595839) = 15.23
+    
+This should not be taken as representative of the potential
+performance of Algol 68.  The Algol 68 Genie implementation is
+intended as a reference implementation of the language with extensive
+compile-time and run-time checking which makes it ideal for teaching
+the art of programming.  There is no reason an Algol 68 implementation
+optimised for maximum performance could not perform competitively with
+similar modern languages such as Java.
+

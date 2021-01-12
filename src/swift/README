@@ -1,0 +1,43 @@
+                    Swift Floating Point Benchmark
+                           Development Notes
+                          December 2nd, 2016
+
+This directory contains an implementation of the Fourmilab floating
+point benchmark in Swift,
+
+    https://developer.apple.com/swift/
+
+Swift is a general purpose programming language developed by Apple for
+application programming on all of their platforms (macOS, iOS, tvOS,
+and watchOS).  In addition, Swift has been ported to Linux, and is now
+developed as an open source project.  Swift is intended as a successor
+to Objective-C as the main development language for Apple systems. 
+Swift is intended to clean up the syntax of C and eliminate security
+risks such as null pointers, errors in memory management, subscripts
+out of range, overflows, and type conversion errors.  Memory
+management is automatic, using a reference count scheme and explicit
+declaration of weak references to avoid memory leaks due to circular
+references.  Functions are first class objects and rudimentary support
+for functional programming (for example, map, reduce, and lazy
+evaluation) is provided.
+
+The program in this directory was developed and tested using Swift
+3.0.1 on an x86_64 machine running Xubuntu 16.04 kernel 4.4.0-47.  In
+order to compile and run this program you must install the Linux
+version of Swift on your computer.  For download and installation
+instructions, see:
+
+    https://swift.org/download/
+
+Timing tests were run having built the program with the swiftc
+compiler and -O option which enables code optimisation.  The Swift
+benchmark was run three times with the iteration count adjusted to
+yield a run time of about five minutes.  Then the process was repeated
+for the reference C implementation.  Comparison of the mean run time
+per iteration yielded a Swift run time of 1.054 as compared to C's run
+time of 1.
+
+Swift is also implemented in an interactive environment called REPL
+(Read-Eval-Print Loop) which does not optimise to the extent of the
+production compiler.  This runs the benchmark 1.887 times slower than
+compiled and optimised Swift code, or 1.988 slower than C.

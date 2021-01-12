@@ -1,0 +1,8 @@
+[package]
+
+name = "fbench"
+version = "1.0.1"
+authors = ["John Walker"]
+
+[dependencies]
+time = "0.1"

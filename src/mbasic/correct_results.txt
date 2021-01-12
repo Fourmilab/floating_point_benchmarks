@@ -1,0 +1,19 @@
+Surface         Radius       Ref. Index    Dispersion   Thickness
+
+   1            27.0500         1.5137       63.6        0.5200
+   2           -16.6800         1.0000        0.0        0.1380
+   3           -16.6800         1.6164       36.7        0.3800
+   4           -78.1000         1.0000        0.0        0.0000
+How many iterations? Press return to begin: Stop the timer: 
+                            Focal Length       Angle to Axis
+Marginal ray               47.09479120920      0.04178472683
+Paraxial ray               47.08372160249      0.04177864821
+
+Longitudinal spherical aberration:          -0.01106960671
+    (Maximum permissible):                   0.05306749907    Acceptable
+
+Offense against sine condition (coma):       0.00008954761
+    (Maximum permissible):                   0.00250000000    Acceptable
+
+Axial chromatic aberration:                  0.00448229032
+    (Maximum permissible):                   0.05306749907    Acceptable

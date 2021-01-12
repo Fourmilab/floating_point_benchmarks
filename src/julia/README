@@ -1,0 +1,78 @@
+               Julia Floating Point Benchmark
+                      Development Notes
+                     November 21st, 2017
+
+This directory contains an implementation of the Fourmilab
+floating point benchmark in Julia.  Tests were run with
+Julia 0.6.1 (the current release at the time), using the
+64-bit generic Linux binaries downoaded from the
+    https://julialang.org/downloads/
+site.
+
+Julia is a language intended for numerical computation in
+science and engineering.  It combines aspects of object
+orientation, functional programming, and conventional imperative
+languages.  It has a dynamic type system, automatic storage
+management with garbage collection, macros, and support for
+parallel processing in both the single instruction multiple data
+(SIMD) and symmetrical multiprocessing paradigms.  An extensive
+mathematical function library is included, and support for
+complex numbers, multiple precision integers and floating point,
+and vector and matrix algebra are built in.
+
+An interactive evaluator is provided, and programs are compiled
+into machine code with a just in time (JIT) compiler based upon
+the LLVM compiler infrastructure.
+
+Implementation of the benchmark was straightforward, and based
+upon the C++ version.  Some restructuring was required because
+Julia does not provide the class and method mechanism of
+C++, nor does it allow passing pointers as function arguments.
+
+As with all ports of the benchmark, I tried to do things in
+the style of the language.  This means I adopted a style much
+like that of the Haskell and Scala benchmarks, using a trace
+context to manage the state as a ray is traced through the
+surfaces of the design.  The transitSurface() function, which
+accounts for the bulk of the benchmark's run time, takes a
+TraceContext as an argument and returns a TraceContext updated
+to reflect the propagation of the ray through the current
+surface.  This means on each call to the function a new TraceContext
+is allocated and one discarded to be cleaned up by garbage
+collection.  You might think this overhead could be reduced by
+replacing the dynamically allocated TraceContext with global
+mutable variables, but that makes things dramatically worse.
+The program fbench_static.jl uses static variables as the
+original C and Fortran versions do, and runs almost four and
+a half times slower than fbench.jl.
+
+I did some preliminary timing tests to try different compiler
+options, none of which seemed to make much difference in run
+time.  I ran the timing tests with code compiled with the
+"-O2 --check-bounds=no" options.  The latter suppresses
+array bound checking.  After initial runs to determine an
+iteration count resulting in a run time of around five minutes,
+I ran five timing tests.  Julia's @time macro was used to time
+the inner loop.  For an iteration count of 110,327,622, timings
+in seconds were:
+
+    295.287764
+    294.458148
+    296.376279
+    296.848715
+    295.434370
+    
+for a mean of 295.6810552 and 2.68 microseconds per iteration.
+
+To compare this with the reference of C, I ran the C benchmark
+as follows.
+
+    fbench_ansi.c compiled with gcc -O3  166,051,660 iterations
+        296.89
+        296.37
+        296.29
+        296.76
+        296.37
+    Mean 296.536  1.7858 microseconds per iteration
+
+Thus the execution time is 1.5007 times that of C.

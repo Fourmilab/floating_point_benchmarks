@@ -1,0 +1,80 @@
+               Modula-2 Floating Point Benchmark
+                       Development Notes
+                      November 23rd, 2017
+
+This directory contains four Modula-2 implementations of the
+floating point benchmark.
+
+The first two were developed by Philippe Guiochon, based upon
+the FreeBasic version of the benchmark.  The versions are for
+two different compilers:
+
+    fbench_JPI.mod  For J.P.I. TopSpeed v3.1 for DOS,
+                    compiled for small memory model,
+                    486 CPU target, runtime checks off.
+
+    fbench_XDS.mod  For Excelsior XDS Modula-2 v2.60 beta
+                    for Win32.
+
+Timings on various machines are given in the source code of the
+programs.  Because I do not have a machine which can run these
+programs, I have not included comparisons with C in the
+benchmark document.
+
+I then used fbench_JPI.mod as the point of departure to develop
+a version compatible with GNU Modula-2 in ISO Modula-2 mode with
+its ISO libraries.  I restructured the program, removed the
+INTRIG code (I'm interested in comparing languages, not their
+library mathematical functions), and tried to make it more in
+keeping with the style of Modula-2 than its Basic ancestor. This
+program, fbench.mod, compiled with GNU Modula-2 version
+gm2-1.6.4, which is built on gcc-6.4.0 with:
+    gm2 -O3 -fiso -flibs=iso,pim -Wpedantic fbench.mod -o fbench
+is the basis for the following timing tests.
+
+    Timings for fbench.iso, 175,495,723 iterations.
+        294.08
+        294.09
+        293.70
+        296.34
+        296.12
+    Mean 294.85  1.6801 microseconds per iteration
+
+To compare this with the reference of C, I ran the C benchmark
+as follows.
+
+    fbench_ansi.c compiled with gcc 5.4.0 -O3  166,051,660 iterations
+        296.89
+        296.37
+        296.29
+        296.76
+        296.37
+    Mean 296.536  1.7858 microseconds per iteration
+
+Thus the execution time is 0.9408 times that of C.  Note that
+this is almost precisely the speed ratio of the C++ version of
+the benchmark compiled with GCC compared to the C implementation
+compiled with the same compiler.  This makes sense since the
+back-end of the compiler is the same for both the G++ and GM2
+compilers, and the structure of the programs they're compiling
+is similar.
+
+Philippe Guiochon then re-tested the fbench.mod program with the
+Excelsior XDS Modula-2 compiler on Windows 32, and encountered
+both compile errors and accuracy problems.  The XDS compiler
+defines the REAL type to be 32-bit single-precision floating
+point, which is insufficient for the accuracy needs of this
+algorithm, and requires variables to be declared as LONGREAL to
+use 64-bit double precision (which then requires importing the
+trigonometric functions from the LongMath module).  In addition,
+this compiler does not permit enumeration types to be used as
+array indices or bounds in FOR statements and requires them to
+be explicitly converted to CARDINAL with the ORD() function.
+Using the ORD() function is ugly but compatible with GNU
+Modula-2, but declaring variables as LONGREAL causes that
+compiler to use the Intel 80-bit floating point type (GCC's
+"long double") instead of the standard 64-bit data type it uses
+for REAL.  Since this may affect the timing (and still other
+compilers may define REAL and LONGREAL in yet other ways), I
+have kept this version separate as fbench_iso_XDS.mod and used
+the original fbench.mod for the timing tests with GNU Modula-2.

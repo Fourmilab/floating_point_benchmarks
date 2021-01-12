@@ -1,0 +1,84 @@
+                    Scala Floating Point Benchmark
+                           Development Notes
+                          September 8th, 2017
+
+This directory contains an implementation of the Fourmilab
+floating point benchmark in Scala,
+
+    http://www.scala-lang.org/
+
+Scala is a general purpose programming language originally
+developed at the École Polytechnique Fédérale in Lausanne,
+Switzerland.  Scala combines the paradigm of functional
+programming with support for conventional object-oriented
+imperative programming, allowing the programmer to choose
+whichever style is most expressive of the algorithm being
+implemented.  Unlike Haskell, which forces the programmer into a
+strict functional style, Scala contains control structures for
+iteration, mutable variables, and a syntax which C and Java
+programmers will find familiar.  Scala runs on the Java virtual
+machine, and Scala and Java code can interoperate, which
+provides Scala access to all existing Java libraries.
+
+The program in this directory was developed and tested using
+Scala 2.12.3 on an x86_64 machine running Xubuntu 16.04 kernel
+4.4.0-93.  In order to compile and run this program you must
+install the Linux version of Scala on your computer.  For
+download and installation instructions, see:
+
+    http://www.scala-lang.org/download/
+
+Scala programs compile to byte code which is executed by an
+implementation of the Java virtual machine.  I ran these tests
+using:
+
+    openjdk version "9-internal"
+    OpenJDK Runtime Environment (build 9-internal+0-2016-04-14-195246.buildd.src)
+    OpenJDK 64-Bit Server VM (build 9-internal+0-2016-04-14-195246.buildd.src, mixed mode)
+
+The Scala implementation of the floating point benchmark is
+written mostly in a pure functional style, but I did use mutable
+variables and iteration where it made the code more readable. 
+Scala does not optimise tail recursion as aggressively as
+Haskell, so iteration may be more efficient in heavily-used
+code.
+
+At the time I developed this benchmark, a recent release of the
+GNU C mathematical function library had been issued which halved
+the mean execution speed of trigonometric functions.  This made
+all comparisons of run time against the C reference
+implementation of the benchmark using the earlier, more
+efficient libraries, invalid. (It's said that the performance
+hit was done in the interest of improved accuracy, but it made
+no difference in the computations of the floating point
+benchmark, which are checked to 13 significant digits.)
+Consequently, I compared the execution speed of the Scala
+implementation against that of the Java version, then computed
+the speed relative to the original C version with the old
+libraries by multiplying the relative speed of Java vs. C and
+Scala vs. Java.
+
+I ran the Scala benchmark for 126612394 iterations and obtained
+the following run times in seconds for four runs:
+	300.34
+	297.63
+	300.03
+	299.32
+These runs give a mean time of 299.33 seconds, or 2.36414
+microseconds per iteration.
+
+I then ran the Java benchmark for 126612394 iterations, yielding
+run times of:
+	265.71
+	265.29
+	265.84
+	266.06
+seconds, with mean 265.725, for 2.09873 microseconds per iteration.
+
+Dividing these means gives a Scala run time of 1.12646 longer
+than that of Java.  Multiplying this by the previously measured
+execution time ratio of Java and C of 1.121 gives a ratio of
+Scala to C of 1.2628.  In other words, for this benchmark, Scala
+runs about 26% slower than C with the original, fast, math
+libraries.  Compared to the current version of C libraries,
+however, it is almost twice as fast.

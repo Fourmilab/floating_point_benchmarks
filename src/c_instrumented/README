@@ -1,0 +1,15 @@
+This directory contains an "instrumented" version of the
+main C floating point benchmark.  It runs only a single
+iteration, does not support internal trigonometric functions,
+and has no user interface.
+
+Its sole purpose is to provide a surface-by-surface intermediate
+output trace of its calculations, which implementors of the
+benchmark in other languages can use to compare with their
+own intermediate results for the purpose of debugging.
+
+You should not use this code for any other purpose.  Any
+changes made to the main C benchmark, as long as they remain
+compatible with the reference implementation output, should not
+affect this program in any way.
+

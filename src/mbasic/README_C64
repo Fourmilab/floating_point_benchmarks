@@ -1,0 +1,37 @@
+The fbench_c64.bas program will run on BASIC V2 on the Commodore
+64.  Unfortunately, this implementation of BASIC only provides
+10 significant digits of accuracy for floating point
+computations.  Consequently, the results of the computation do
+not agree with the canonical results in the lower-order digits,
+and thus do not pass the accuracy test required to be reported.
+
+The result of running the program is as follows (I have
+unwrapped long lines in the interest of readability).
+
+
+                    FOCAL LENGTH   ANGLE TO AXIS
+MARGINAL RAY         47.0947911     .0417847269
+PARAXIAL RAY         47.0837215     .0417786483
+
+LONGITUDINAL SPHERICAL ABERRATION: -.0110696256
+  (MAXIMUM PERMISSIBLE):            .0530674989 ACCEPTABLE
+
+OFFENSE AGAINST SINE CONDITION (COMA): 8.95468984E-05
+  (MAXIMUM PERMISSIBLE):               2.5E-03 ACCEPTABLE
+
+AXIAL CHROMATIC ABERRATION:    4.48255241E-03
+  (MAXIMUM PERMISSIBLE):        .0530674989 ACCEPTABLE
+
+Commodore 64 BASIC has no PRINT USING statement, so we have to
+live with the default formatting for floating point numbers.
+
+As you can see, the most significant digits are correct, but the
+limited precision induces errors in the least significant
+digits.
+
+The program is supplied in lower case ASCII, as that is what the
+VICE emulator expects to be pasted into its console window.
+
+The only thing that can be learned from this exercise is that
+the benchmark is effective in detecting floating point
+implementations which provide insufficient precision.

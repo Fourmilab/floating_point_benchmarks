@@ -1,0 +1,219 @@
+               Chapel Floating Point Benchmark
+                      Development Notes
+                     October 26th, 2017
+
+This directory contains an implementation of the Fourmilab
+floating point benchmark in Chapel.
+
+Chapel is a programming language developed by Cray with the goal
+of integrating parallel computing into a language without
+cumbersome function calls or awkward syntax.  The language
+implements both task based and data based parallelism: in the
+first, the programmer explicitly defines the tasks to be run in
+parallel, while in the second an operation is performed on a
+collection of data and the compiler and runtime system decides
+how to partition it among the computing resources available. 
+Both symmetric multiprocessing with shared memory (as on
+contemporary "multi-core" microprocessors) and parallel
+architectures with local memory per processor and message
+passing are supported.
+
+Apart from its parallel processing capabilities, Chapel is a
+conventional object oriented imperative programming language.
+Programmers familiar with C++, Java, and other such languages
+will quickly become accustomed to its syntax and structure.
+
+Because this is the first parallel processing language in which
+the floating point benchmark has been implemented, I wanted to
+test its performance in both serial and parallel processing
+modes. Since the benchmark does not process large arrays of
+data, I used task parallelism to implement two kinds of parallel
+processing.
+
+The first is "parallel trace", enabled by compiling with:
+    chpl --fast fbench.chpl --set partrace=true
+The ray tracing process propagates light of four different
+wavelengths through the lens assembly and then uses the object
+distance and axis slope angle of the rays to compute various
+aberrations.  When partrace is set to true, the computation of
+these rays is performed in parallel, with four tasks running in
+a "cobegin" structure.  When all of the tasks are complete,
+their results, stored in shared memory passed to the tasks by
+reference, is used to compute the aberrations.
+
+The second option is "parallel iteration", enabled by compiling
+with:
+    chpl --fast fbench.chpl --set pariter=n
+where n is the number of tasks among which the specified
+iteration count will be divided.  On a multi-core machine, this
+should usually be set to the number of processor cores
+available, which you can determine on most Linux systems with:
+    cat /proc/cpuinfo | grep processor | wc -l
+(If the number of tasks does not evenly divide the number of
+iterations, the extra iterations are assigned to one of the
+tasks.) The parallel iteration model might be seen as cheating,
+but in a number of applications, such as ray tracing for
+computer generated image rendering (as opposed to the ray
+tracing we do in the benchmark for optical design), a large
+number of computations are done which are independent of one
+another (for example, every pixel in a generated image is
+independent of every other), and the job can be parallelised by
+a simple "farm" algorithm which spreads the work over as many
+processors as are available.  The parallel iteration model
+allows testing this approach with the floating point benchmark.
+
+If the benchmark is compiled without specifying partrace or
+pariter, it will run the task serially as in conventional
+language implementations.  The number of iterations is specified
+on the command line when running the benchmark as:
+    ./fbench --iterations=n
+where n is the number to be run.
+
+After preliminary timing runs to determine the number of
+iterations, I ran the serial benchmark for 250,000,000
+iterations, with run times in seconds of:
+
+         user    real    sys
+        301.00  235.73  170.46
+        299.24  234.26  169.27
+        297.93  233.67  169.40
+        301.02  236.05  171.08
+        298.59  234.45  170.30
+  Mean  299.56  234.83  170.10
+
+The mean user time comes to 1.1982 microseconds per iteration.
+
+Now, to one accustomed to running this benchmark, these times
+were distinctly odd if not downright weird.  You just don't see
+real time less than user time, and what's with that huge system
+time?  Well, it turns out that even though I didn't enable any
+of the explicit parallelisation in the code, it was actually
+using two threads.  (I haven't dug into the generated C code to
+figure out how it was using them.)  The first clue was when I
+looked at the running program with top and saw:
+
+    PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+    20   0  167900   2152   2012 S 199.7  0.0   0:12.54 fbench
+
+Yup, almost 200% CPU utilisation.  I then ran top -H to show
+threads and saw:
+
+    PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND
+    20   0  167900   2152   2012 R 99.9  0.0   1:43.28 fbench
+    20   0  167900   2152   2012 R 99.7  0.0   1:43.27 fbench
+
+so indeed we had two threads.  You can control the number of threads
+with the environment variable CHPL_RT_NUM_THREADS_PER_LOCALE, so I
+set:
+    export CHPL_RT_NUM_THREADS_PER_LOCALE=1
+and re-ran the benchmark, verifying with top that it was now using
+only one thread.  I got the following times:
+
+         user    real    sys
+        235.46  235.47    0.00
+        236.52  236.55    0.02
+        235.06  235.07    0.00
+        235.17  235.20    0.02
+        236.20  236.21    0.00
+  Mean  235.68
+
+Now that's more like what we're used to seeing!  User and real
+times are essentially identical, with negligible system time.
+Note that the user time in the single threaded run was
+essentially identical to the real time when it was running with
+two threads.  So, all that was accomplished by using two threads
+was burning up more time on two cores and wasting a lot of time
+in system calls creating, synchronising, and destroying them.
+With one thread, the mean user time per iteration was 0.9427
+microseconds per iteration.
+
+I then ran the C benchmark for 166,051,660 iterations, yielding
+run times of:
+    296.89
+    296.37
+    296.29
+    296.76
+    296.37
+seconds, with mean 296.536, for 1.7858 microseconds per
+iteration.
+
+Comparing these times gives a ratio of 0.5279 for Chapel to C.
+In other words, the Chapel program ran about twice as fast
+as C.
+
+Now, let's explore the various kinds of explicit parallelism.
+First, we'll enable parallel trace by compiling with "--set
+partrace=true".  The results are...disastrous.  I ran a
+comparison test with 10,000,000 iterations and measured the
+timings for CHPL_RT_NUM_THREADS_PER_LOCALE set to the number of
+threads in the table below:
+
+    threads     real    user     sys
+       1        16.92   16.91    0.00
+       2        30.74   41.68   18.16
+       4        43.15   68.23   90.65
+       8        64.29  112.38  358.88
+
+The amount of computation done in the parallel threads is just
+not large enough to recover the cost of creating and disposing
+of the threads.  The thread overhead dwarfs the gain from
+parallelisation, and all we manage to do is keep the CPU cores
+(the machine on which I'm testing has eight) busy with system
+and user time overhead, which increases so rapidly the real
+runtime degrades as we throw more cores at the problem.
+Interestingly, the partrace=true program, when restricted to one
+thread, still ran much slower than the serial version of the
+program, which ran in 9.49 seconds on one thread.
+
+Next, we'll move on to parallel iteration, which models a "farm"
+algorithm division of processing a large data set.  Here, we
+simply partition the number of iterations of the benchmark and
+process them in separate threads with Chapel's "coforall"
+mechanism.  Running 250,000,000 iterations with 8 threads
+("--set pariter=8") yields timings of:
+
+         user    real    sys
+        342.27  48.95   39.84
+        339.50  48.10   39.76
+        343.01  49.34   42.19
+        342.08  48.78   39.90
+        338.83  47.70   37.30
+  Mean  341.14  48.57   39.79
+
+Now we're cooking!  Going to 8 threads working on the iterations
+cut the total real runtime from 235.68 seconds for the serial
+implementation to just 48.57 seconds--almost five times faster.
+Note that we paid a price for this in additional user
+computation time across all of the threads: 341.14 seconds as
+opposed to 235.68, and we incurred around 40 seconds of system
+overhead, which was negligible in the serial program, but the
+bottom line was that we "got the answer out" much more quickly,
+even though the machine was working harder to get to the finish
+line.
+
+To see just how much performance I could get from parallelism, I
+moved testing to the main Fourmilab server, Pallas.  This
+machine has 64 CPU cores and runs at about the same speed as the
+laptop on which I was developing.  To confirm this, I ran the C
+fbench compiled and static linked on the laptop.
+    301.43
+    300.92
+This is essentially the same speed as the laptop running the
+same binary.
+
+Next, I built the Chapel benchmark with pariter=32 and ran it
+with the following settings of CHPL_RT_NUM_THREADS_PER_LOCALE.
+    threads     real    user     sys
+       1       459.76  458.86    0.08
+      16        33.08  523.78    0.12
+      32        17.17  530.21    0.34
+      64        25.35  816.64    0.43
+
+Finally, here are timings for a pariter=64 build.
+    threads     real    user     sys
+     32        17.12  528.46    0.29
+     64        14.00  824.79    0.66
+
+By using 64 threads and cores, we are now running 16.8 times
+faster than the single thread, non-parallel version of the
+program.

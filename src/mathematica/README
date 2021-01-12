@@ -1,0 +1,64 @@
+
+    	    	Mathematica Floating Point Benchmark
+
+This directory contains an implementation of the Fourmilab floating
+point benchmark in Wolfram Research's Mathematica language.  The
+program was developed with Mathematica 10.3.1.0 on the Raspberry Pi 3
+computer under the Rasbian distribution of the Linux operating system.
+Only features of Mathematica which are described in the 5th edition
+of The Mathematica Book (2003) are used, and no add-on packages are
+employed.  The program runs without modification on the Wolfram
+Development Platform using a free account in the Wolfram Open Cloud.
+
+The program is supplied as a Mathematica "notebook", fbench.nb.  This
+file can be loaded into a desktop or cloud implementation of Mathematica
+or viewed with a utility such as Wolfram CDF Player.  If you'd like to
+read the code and don't have access to these utilities, the file
+fbench.pdf is an export of the notebook in PDF which may be read
+with any program able to display such files.
+
+It is, of course, absurd to use a computer mathematics system to
+perform heavy-duty floating point scientific computation (at least
+without investing the effort to optimise the most computationally-intense
+portions of the task), so the performance measured by running this
+program should not be taken as indicative of the merit of Mathematica
+when used for the purposes for which it is intended.  Like the COBOL
+implementation of the benchmark, this is mostly an exercise in seeing
+if it's possible and comparing how easily the algorithm can be
+expressed in different programming languages.
+
+To run the benchmark, load fbench.nb into your Mathematica system and
+evaluate the entire notebook to pass the definitions and code to the
+Mathematica kernel.  You can then scroll down to the bottom: the
+"Perform Benchmark" section, edit the iteration count in the
+"runBenchmark" function call to whatever count you wish (it is
+supplied set to 1000), then evaluate that expression to run the
+benchmark.  The total execution time and mean execution time for
+1000 iterations will be reported.  The results of the computation are
+checked, and an error message will appear if any discrepancies are
+detected.
+
+The implementation of the benchmark program is completely straightforward:
+no implementation tricks intended to improve performance are used and
+no optimisations such as compiling heavily-used functions are
+done.  The program is written in functional style, with all assignments
+immutable.  The only iteration is that used to run the benchmark
+multiple times: tail recursion is used elsewhere.  The code which puts
+together the summary of the computation (evaluationReport[]) is
+particularly ugly, but is not included in the benchmark timing.
+
+To compare performance with native C code, I ran the C language
+version of the benchmark three times for about five minutes each
+on the Raspberry Pi 3 platform and measured a mean time per iteration
+of 14.06 microseconds.  I then ran the Mathematica benchmark three
+times for five minutes and computed a mean time per iteration of 5506
+microseconds.  The C code thus runs around 391.6 times faster than
+Mathematica.
+
+Note that the Raspberry Pi 3 runs Mathematica very slowly compared
+to most other desktop platforms.  When I ran the identical benchmark
+in the Wolfram Cloud, it runs at about 681.7 microseconds per iteration,
+or eight times faster.
+
+John Walker
+November 28, 2016

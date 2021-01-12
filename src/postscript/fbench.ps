@@ -1,0 +1,26 @@
+%!PS
+
+    %   Wavelengths of standard spectral lines in Angstroms
+    %           (Not all are used in this program)
+
+    /a-line 7621.0    def
+    /b-line 6869.955  def
+    /c-line 6562.816  def
+    /d-line 5895.944  def
+    /e-line 5269.557  def
+    /f-line 4861.344  def
+    /g'-line 4340.477 def
+    /h-line 3968.494  def
+    
+    %   Convert radians to degrees
+    
+    /DpR 180 3.14159265358979323846 div def
+    /degrees        % angleR radians angleD
+        { DpR mul }
+    def
+
+    %   Define tan in terms of sin and cos
+    
+    /tan            % angle tan real
+        { dup sin exch cos div }
+    def

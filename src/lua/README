@@ -1,0 +1,3 @@
+This program was developed and tested with Lua 5.2.3.
+
+The timings for LuaJIT were done with version 2.0.3.

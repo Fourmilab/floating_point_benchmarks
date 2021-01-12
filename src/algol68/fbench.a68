@@ -1,0 +1,322 @@
+COMMENT
+
+    John Walker's Floating Point Benchmark, derived from...
+  
+    Marinchip Interactive Lens Design System
+  
+    By John Walker
+       http://www.fourmilab.ch/
+  
+    This program may be used, distributed, and modified freely as
+    long as the origin information is preserved.
+  
+    This is a complete optical design raytracing algorithm,
+    stripped of its user interface and recast into Algol 68.
+    It not only determines execution speed on an extremely
+    floating point (including trig function) intensive
+    real-world application, it checks accuracy on an algorithm
+    that is exquisitely sensitive to errors. The performance of
+    this program is typically far more sensitive to changes in
+    the efficiency of the trigonometric library routines than the
+    average floating point program.
+  
+    Ported from the Ada language implementation in May 2014
+    by John Walker.
+
+COMMENT
+
+    #  The cot function defined in terms of tan  #
+
+    PROC cot = (REAL x) REAL:
+        (
+            1 / tan(x)
+        );
+    
+#       Wavelengths of standard spectral lines in Angstroms
+                (Not all are used in this program)  #
+    
+    INT a line = 1, b line = 2, c line = 3, d line = 4,
+        e line = 5, f line = 6, g prime line = 7,
+        h line = 8;
+        
+    [] REAL spectral line =
+        (
+            7621.0,        # A #
+            6869.955,      # B #
+            6562.816,      # C #
+            5895.944,      # D #
+            5269.557,      # E #
+            4861.344,      # F #
+            4340.477,      # G' #
+            3968.494       # H #
+        );
+    
+    MODE SURFACE_PROPERTY = STRUCT (
+        REAL curvature radius,
+             index of refraction,
+             dispersion,
+             edge thickness
+    );
+    
+    #   The  test case used in this program is the design for a 4 inch
+        f/12 achromatic telescope objective used as the example in Wyld's
+        classic work on ray tracing by hand, given in Amateur Telescope
+        Making, Volume 3 (Volume 2 in the 1996 reprint edition).  #
+    
+    SURFACE_PROPERTY t1 = ( 27.05, 1.5137, 63.6, 0.52 ),
+                     t2 = ( -16.68, 1.0, 0.0, 0.138 ),
+                     t3 = ( -16.68, 1.6164, 36.7, 0.38  ),
+                     t4 = ( -78.1, 1.0, 0.0, 0.0 );
+
+    [] SURFACE_PROPERTY test case = 
+                        ( t1, t2, t3, t4 )
+                   ;
+                   
+    INT current surfaces = 4;
+                   
+    INT marginal ray = 0, paraxial ray = 1;
+    
+    INT paraxial;
+    
+    REAL clear aperture, aberr lspher, aberr osc, aberr lchrom,
+         max lspher, max osc, max lchrom, radius of curvature,
+         object distance, ray height, axis slope angle,
+         from index, to index;
+         
+    #  The od sa array holds the result from the main trace of
+       paraxial and marginal rays in D light.  The first subscript
+       indicates whether the ray is marginal or paraxial and the
+       second selects the object distance or axis slope angle.
+       This might be made into a STRUCT, but since it's so simple
+       and used so infrequently it really doesn't matter.  #
+    
+    INT od field = 0,
+        sa field = 1;
+    [0 : 1, 0 : 1] REAL od sa;
+    
+#       Calculate passage through surface
+  
+        If the variable paraxial is paraxial ray, the trace through the
+        surface will be done using the paraxial approximations.
+        Otherwise, the normal trigonometric trace will be done.
+  
+        This procedure takes the following global inputs:
+  
+        radius of curvature     Radius of curvature of surface
+                                being crossed.  If 0, surface is
+                                plane.
+  
+        object distance         Distance of object focus from
+                                lens vertex.  If 0, incoming
+                                rays are parallel and
+                                the following must be specified:
+  
+        ray height              Height of ray from axis.  Only
+                                relevant if object distance = 0
+  
+        axis slope angle        Angle incoming ray makes with axis
+                                at intercept
+  
+        from index              Refractive index of medium being left
+  
+        to index                Refractive index of medium being
+                                entered.
+  
+        The outputs are the following global variables:
+  
+        object distance         Distance from vertex to object focus
+                                after refraction.
+  
+        axis slope angle        Angle incoming ray makes with axis
+                                at intercept after refraction.  #
+    
+    PROC transit surface = VOID:
+    (
+        REAL
+            iang,               # Incidence angle #
+            rang,               # Refraction angle #
+            iang sin,           # Incidence angle sin #
+            rang sin,           # Refraction angle sin #
+            old axis slope angle,
+            sagitta;
+
+        IF paraxial = paraxial ray THEN
+            IF radius of curvature /= 0 THEN
+                IF object distance = 0 THEN
+                    axis slope angle := 0;
+                    iang sin := ray height / radius of curvature
+                ELSE
+                    iang sin := ((object distance -
+                        radius of curvature) / radius of curvature) *
+                        axis slope angle
+                FI;
+                rang sin := (from index / to index) * iang sin;
+                old axis slope angle := axis slope angle;
+                axis slope angle := axis slope angle +
+                    iang sin - rang sin;
+                IF object distance /= 0 THEN
+                    ray height := object distance * old axis slope angle
+                FI;
+                object distance := ray height / axis slope angle
+            ELSE
+                object distance := object distance * (to index / from index);
+                axis slope angle := axis slope angle * (from index / to index)
+            FI
+        ELSE
+            IF radius of curvature /= 0 THEN
+                IF object distance = 0 THEN
+                    axis slope angle := 0;
+                    iang sin := ray height / radius of curvature
+                ELSE
+                    iang sin := ((object distance -
+                        radius of curvature) / radius of curvature) *
+                        sin(axis slope angle)
+                FI;
+                iang := arcsin(iang sin);
+                rang sin := (from index / to index) * iang sin;
+                old axis slope angle := axis slope angle;
+                axis slope angle := axis slope angle +
+                    iang - arcsin(rang sin);
+                sagitta := sin((old axis slope angle + iang) / 2);
+                sagitta := 2 * radius of curvature * (sagitta ^ 2);
+                object distance := ((radius of curvature *
+                    sin(old axis slope angle + iang)) *
+                    cot(axis slope angle)) + sagitta
+            ELSE
+
+                rang := -arcsin((from index / to index) *
+                    sin(axis slope angle));
+                object distance := object distance * ((to index *
+                    cos(-rang)) / (from index *
+                    cos(axis slope angle)));
+                axis slope angle := -rang
+            FI
+        FI
+    );
+    
+#   Perform ray trace for a given design for a specific
+    spectral line and ray height.  The caller specifies the
+    desired spectral line and ray height.  The global
+    object distance is updated based upon tracing this
+    ray.  #
+    
+    PROC trace line = (INT line, REAL ray h) VOID:
+    (
+        object distance := 0;
+        ray height := ray h;
+        from index := 1;
+        
+        FOR i FROM 1 TO current surfaces DO
+            radius of curvature := curvature radius OF test case[i];
+            to index := index of refraction OF test case[i];
+            IF to index > 1 THEN
+                to index := to index + ((spectral line[d line] -
+                    spectral line[line]) /
+                    (spectral line[c line] - spectral line[f line])) *
+                    ((index of refraction OF test case[i] - 1.0) /
+                    dispersion OF test case[i])
+            FI;
+            transit surface;
+            from index := to index;
+            IF i < current surfaces THEN
+                object distance := object distance -
+                    edge thickness OF test case[i]
+            FI
+        OD
+    );
+
+                       
+    BEGIN
+    
+        INT number of iterations := 100000;
+        clear aperture := 4;
+        REAL od cline, od fline;
+        
+        FOR iteration FROM 1 TO number of iterations DO
+        
+            # Do main trace in D light #
+        
+            FOR p FROM marginal ray TO paraxial ray DO
+                paraxial := p;
+                trace line(d line, clear aperture / 2);
+                od sa[paraxial, od field] := object distance;
+                od sa[paraxial, sa field] := axis slope angle
+            OD;
+            
+            # Trace marginal ray in C #
+            
+            paraxial := marginal ray;
+            trace line(c line, clear aperture / 2);
+            od cline := object distance;
+            
+            # Trace marginal ray in F #
+            
+            trace line(f line, clear aperture / 2);
+            od fline := object distance;
+            
+            # Compute aberrations of the design
+                
+              The longitudinal spherical aberration is just the
+              difference between where the D line comes to focus
+              for paraxial and marginal rays. #
+              
+            aberr lspher := od sa[paraxial ray, od field] - od sa[marginal ray, od field];
+            
+            # The offense against the sine condition is a measure
+              of the degree of coma in the design.  We compute it
+              as the lateral distance in the focal plane between
+              where a paraxial ray and marginal ray in the D line
+              come to focus. #
+              
+            aberr osc := 1 - ((od sa[paraxial ray, od field] * od sa[paraxial ray, sa field]) /
+                              (sin(od sa[marginal ray, sa field]) * od sa[marginal ray, od field]));
+                             
+            # The axial chromatic aberration is the distance between
+              where marginal rays in the C and F lines come to focus. #
+            
+            aberr lchrom := od fline - od cline;
+            
+            # Compute maximum acceptable values for each aberration
+
+              Maximum longitudinal spherical aberration, which is
+              also the maximum for axial chromatic aberration.  This
+              is computed for the D line. #
+              
+            max lspher := 0.0000926 / sin(od sa[marginal ray, sa field]) ^ 2;
+            max lchrom := max lspher;
+            max osc := 0.0025
+        OD;
+        
+        FORMAT ray format = $g(-21,11)  g(-16,11)$,
+               aberration format = $g(-16,11)$;
+        
+        printf(($"   Marginal ray   "$, ray format, od sa[marginal ray, od field],
+                od sa[marginal ray, sa field]));
+        print(new line);
+        
+        printf(($"   Paraxial ray   "$, ray format, od sa[paraxial ray, od field],
+                od sa[paraxial ray, sa field]));
+        print(new line);
+        
+        printf(($"Longitudinal spherical aberration:      "$,
+                aberration format, aberr lspher));
+        print(new line);        
+        printf(($"    (Maximum permissible):              "$,
+                aberration format, max lspher));
+        print(new line);
+        
+        printf(($"Offense against sine condition (coma):  "$,
+                aberration format, aberr osc));
+        print(new line);        
+        printf(($"    (Maximum permissible):              "$,
+                aberration format, max osc));
+        print(new line);
+        
+        printf(($"Axial chromatic aberration:             "$,
+                aberration format, aberr lchrom));
+        print(new line);        
+        printf(($"    (Maximum permissible):              "$,
+                aberration format, max lchrom));
+        print(new line)
+        
+    END

@@ -1,0 +1,1229 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='WolframEngine 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       160,          7]
+NotebookDataLength[     48643,       1220]
+NotebookOptionsPosition[     45844,       1123]
+NotebookOutlinePosition[     46182,       1138]
+CellTagsIndexPosition[     46139,       1135]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Floating Point Benchmark", "Section",
+ CellChangeTimes->{{3.689089030648018*^9, 3.689089069829751*^9}, {
+  3.689089806009542*^9, 3.6890898093796253`*^9}},
+ FormatType->"TextForm"],
+
+Cell[TextData[{
+ "This is John Walker\[CloseCurlyQuote]s",
+ ButtonBox[" Floating Point Benchmark",
+  BaseStyle->"Hyperlink",
+  ButtonData->{
+    URL["http://www.fourmilab.ch/fbench/fbench.html"], None},
+  ButtonNote->"http://www.fourmilab.ch/fbench/fbench.html"],
+ ", derived from\[Ellipsis]\n\n\tMarinchip Interactive Lens Design System\n\t \
+     John Walker        December 1980\n\t \t\n\t \t   by John Walker\n\t      \
+  ",
+ ButtonBox["http://www.fourmilab.ch/",
+  BaseStyle->"Hyperlink",
+  ButtonData->{
+    URL["http://www.fourmilab.ch/"], None},
+  ButtonNote->"http://www.fourmilab.ch/"],
+ "\n\t \t     \nThis program may be used, distributed, and modified freely as \
+long as the origin information is preserved.\n\nThis is a complete optical \
+design raytracing algorithm, stripped of its user interface and recast into \
+",
+ StyleBox["Mathematica",
+  FontSlant->"Italic"],
+ ". It not only determines execution speed on an extremely floating point \
+(including trig function) intensive real-world application, it checks \
+accuracy on an algorithm that is exquisitely sensitive to errors. The \
+performance of this program is typically far more sensitive to changes in the \
+efficiency of the trigonometric library routines than the average floating \
+point program.\n\nImplemented in November 2016 by John Walker.\t \t     "
+}], "Text",
+ CellChangeTimes->{{3.689267217221796*^9, 3.689267236369747*^9}, {
+  3.6892672758742447`*^9, 3.689267469188589*^9}, {3.68933401615451*^9, 
+  3.6893340478557673`*^9}, {3.6893341507181053`*^9, 3.6893341507202473`*^9}, {
+  3.689334219933824*^9, 3.689334219936515*^9}}],
+
+Cell[CellGroupData[{
+
+Cell["Spectral Lines", "Subsection",
+ CellChangeTimes->{{3.689250858123712*^9, 3.689250868882985*^9}}],
+
+Cell["\<\
+We define names for standard spectral lines in Angstroms.  (Not all are used \
+in this program.)\
+\>", "Text",
+ CellChangeTimes->{{3.689089475710629*^9, 3.689089512115261*^9}, 
+   3.6890897462814007`*^9, 3.6892508156382227`*^9}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"aLine", " ", "=", " ", "7621.0"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"bLine", " ", "=", " ", "6869.955"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"cLine", " ", "=", " ", "6562.816"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"dLine", " ", "=", " ", "5895.944"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eLine", " ", "=", " ", "5269.557"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"fLine", " ", "=", " ", "4861.344"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"gPrimeLine", " ", "=", " ", "4340.477"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"hLine", " ", "=", " ", "3968.494"}], ";"}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.6890895274392347`*^9, 3.689089635531423*^9}, {
+  3.6891746370958853`*^9, 3.689174661935313*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Lens Design", "Subsection",
+ CellChangeTimes->{{3.689250885321122*^9, 3.689250887864161*^9}}],
+
+Cell[TextData[{
+ "The  test case used in this program is the design for a 4 inch f/12 \
+achromatic telescope objective used as the example in Wyld\[CloseCurlyQuote]s \
+classic work on ray tracing by hand, given in ",
+ StyleBox["Amateur Telescope Making",
+  FontSlant->"Italic"],
+ ", Volume 3 (Volume 2 in the 1996 reprint edition).\n\nDefinitions for \
+accessing fields of a surface description in a design."
+}], "Text",
+ CellChangeTimes->{{3.689089967064241*^9, 3.689089979779915*^9}, {
+  3.6892445605321407`*^9, 3.6892445749792767`*^9}, {3.689333864503356*^9, 
+  3.6893338709105186`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"curvatureRadius", " ", "=", " ", "1"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"indexOfRefraction", " ", "=", "2"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"dispersion", " ", "=", " ", "3"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"edgeThickness", " ", "=", " ", "4"}], ";"}]}], "Input",
+ CellChangeTimes->{3.689333812767665*^9}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"wyldClearAperture", " ", "=", " ", "4"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"wyldLens", " ", "=", " ", 
+   RowBox[{"{", "\[IndentingNewLine]", "\t\t\t", 
+    RowBox[{
+     RowBox[{"{", " ", 
+      RowBox[{"27.05", ",", "1.5137", ",", "63.6", ",", "0.52"}], " ", "}"}], 
+     ",", "\[IndentingNewLine]", "\t\t\t", 
+     RowBox[{"{", " ", 
+      RowBox[{
+       RowBox[{"-", "16.68"}], ",", " ", "1.0", ",", "0.0", ",", "0.138"}], 
+      " ", "}"}], ",", "\[IndentingNewLine]", "\t\t\t", 
+     RowBox[{"{", " ", 
+      RowBox[{
+       RowBox[{"-", "16.68"}], ",", " ", "1.6164", ",", "36.7", ",", "0.38"}],
+       "}"}], ",", "\[IndentingNewLine]", "\t\t\t", 
+     RowBox[{"{", " ", 
+      RowBox[{
+       RowBox[{"-", "78.1"}], ",", " ", "1.0", ",", "0.0", ",", "0.0"}], " ", 
+      "}"}]}], "\[IndentingNewLine]", "\t\t     ", "}"}]}], ";"}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.6890900072660027`*^9, 3.6890902442338657`*^9}, {
+   3.689174681284886*^9, 3.6891746848963747`*^9}, 3.689250801258428*^9, {
+   3.689333793283326*^9, 3.689333802953291*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["traceContext", "Subsection",
+ CellChangeTimes->{{3.689250794008521*^9, 3.689250797168046*^9}}],
+
+Cell[TextData[{
+ "A traceContext is a list consisting of the following fields:\n\n",
+ StyleBox["axialIncidence",
+  FontWeight->"Bold"],
+ "\t\tIs the ray paraxial or marginal?\n\n",
+ StyleBox["radiusOfCurvature",
+  FontWeight->"Bold"],
+ "\tRadius of curvature of surface being crossed.  If 0, surface is plane.\n\n\
+",
+ StyleBox["objectDistance\t",
+  FontWeight->"Bold"],
+ "\tDistance of object focus from lens vertex.  If 0, incoming rays are \t\t\t\
+parallel and the following must be specified:\n\n",
+ StyleBox["rayHeight",
+  FontWeight->"Bold"],
+ "\t\tHeight of ray from axis.  Only relevant if objectDistance == 0\n\n",
+ StyleBox["axisSlopeAngle\t\t",
+  FontWeight->"Bold"],
+ "Angle incoming ray makes with axis at intercept\n\n",
+ StyleBox["fromIndex\t\t",
+  FontWeight->"Bold"],
+ "Refractive index of medium being left",
+ StyleBox["\n\ntoIndex\t\t",
+  FontWeight->"Bold"],
+ "Refractive index of medium being entered\n\nDefinitions for accessing \
+fields in a traceContext list."
+}], "Text",
+ CellChangeTimes->{{3.68923464905199*^9, 3.689234801111854*^9}, {
+  3.689235071388255*^9, 3.689235122520504*^9}, {3.6892351542741823`*^9, 
+  3.689235436542383*^9}, {3.68924122153578*^9, 3.6892412904972067`*^9}, {
+  3.689267526238598*^9, 3.689267530633828*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"axialIncidence", " ", "=", " ", "1"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"radiusOfCurvature", " ", "=", " ", "2"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"objectDistance", " ", "=", " ", "3"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"rayHeight", " ", "=", " ", "4"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"axisSlopeAngle", " ", "=", " ", "5"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"fromIndex", " ", "=", " ", "6"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"toIndex", " ", "=", " ", "7"}], ";"}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689241309519568*^9, 3.689241362338258*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["transitSurface", "Subsection",
+ CellChangeTimes->{{3.6892507728386*^9, 3.689250776234043*^9}}],
+
+Cell[TextData[{
+ "transitSurface carries a ray across a surface.  The function is called with \
+the elements of the traceContext as its arguments.  It returns a traceContext \
+as a list with the following components modified to reflect the ray as it \
+exits the surface.\n\n",
+ StyleBox["objectDistance\t",
+  FontWeight->"Bold"],
+ "\tDistance from vertex to object focus after refraction\n\n",
+ StyleBox["rayHeight",
+  FontWeight->"Bold"],
+ "\t\tHeight of ray from axis\n\n",
+ StyleBox["axisSlopeAngle\t\t",
+  FontWeight->"Bold"],
+ "Angle incoming ray makes with axis at intercept after refraction\n\nThere \
+are four cases: a paraxial or marginal ray, each crossing a flat or curved \
+surface.\n\nFirst, a paraxial ray crossing a flat surface."
+}], "Text",
+ CellChangeTimes->{{3.689153744117688*^9, 3.6891538538326683`*^9}, {
+  3.689155543426256*^9, 3.6891555676724167`*^9}, {3.689235459452326*^9, 
+  3.6892356030418587`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"transitSurface", "[", 
+   RowBox[{
+   "paraxialRay", ",", " ", "radiusOfCurvatureS_", ",", " ", 
+    "objectDistanceS_", ",", " ", "rayHeightS_", ",", " ", "axisSlopeAngleS_",
+     ",", " ", "fromIndexS_", ",", " ", "toIndexS_"}], "]"}], " ", ":=", " ", 
+  
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"paraxialRay", ",", "0", ",", " ", 
+     RowBox[{"objectDistanceS", " ", "*", " ", 
+      RowBox[{"(", 
+       RowBox[{"toIndexS", " ", "/", " ", "fromIndexS"}], ")"}]}], ",", " ", 
+     "rayHeightS", ",", " ", 
+     RowBox[{"axisSlopeAngleS", " ", "*", " ", 
+      RowBox[{"(", 
+       RowBox[{"fromIndexS", " ", "/", " ", "toIndexS"}], ")"}]}], ",", " ", 
+     "fromIndexS", ",", " ", "toIndexS"}], "}"}], " ", "/;", " ", 
+   RowBox[{"radiusOfCurvatureS", " ", "\[Equal]", " ", "0"}]}]}]], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689152395733839*^9, 3.689152534710804*^9}, {
+   3.6891526102636747`*^9, 3.689152809558298*^9}, {3.689152947131338*^9, 
+   3.689152950296471*^9}, {3.689153101679193*^9, 3.689153527503319*^9}, {
+   3.6891535854535847`*^9, 3.689153593152932*^9}, {3.6891538635779467`*^9, 
+   3.689153895492672*^9}, 3.689158529876047*^9, {3.689158858143989*^9, 
+   3.689158920525985*^9}, {3.6891591078120527`*^9, 3.689159113946835*^9}, {
+   3.689159262961505*^9, 3.689159278262535*^9}, {3.689159536588023*^9, 
+   3.689159608975182*^9}, {3.689160176802631*^9, 3.6891601785866337`*^9}, {
+   3.689160213514485*^9, 3.6891602142532673`*^9}, {3.6891603624629393`*^9, 
+   3.6891603648334227`*^9}, 3.689162510046403*^9}],
+
+Cell["Second, a paraxial ray crossing a curved surface.", "Text",
+ CellChangeTimes->{{3.68915558252459*^9, 3.689155601692458*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"transitSurface", "[", 
+   RowBox[{
+   "paraxialRay", ",", " ", "radiusOfCurvatureS_", ",", " ", 
+    "objectDistanceS_", ",", " ", "rayHeightS_", ",", " ", "axisSlopeAngleS_",
+     ",", " ", "fromIndexS_", ",", " ", "toIndexS_"}], "]"}], " ", ":=", " ", 
+  
+  RowBox[{
+   RowBox[{"Block", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "odz", ",", "axisSlopeAngleP", ",", "iangSin", ",", " ", "rangSin", ",",
+        "axisSlopeAnglePP", ",", " ", "rayHeightP", ",", " ", 
+       "objectDistanceP"}], "}"}], ",", " ", 
+     RowBox[{
+      RowBox[{"odz", " ", "=", " ", 
+       RowBox[{"objectDistanceS", " ", "\[Equal]", " ", "0"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"axisSlopeAngleP", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{"odz", ",", " ", "0", ",", " ", "axisSlopeAngleS"}], "]"}]}], 
+      ";", "\[IndentingNewLine]", 
+      RowBox[{"iangSin", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{"odz", ",", " ", 
+         RowBox[{"rayHeightS", " ", "/", " ", "radiusOfCurvatureS"}], ",", 
+         " ", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"objectDistanceS", " ", "-", " ", "radiusOfCurvatureS"}],
+              ")"}], " ", "/", " ", "radiusOfCurvatureS"}], ")"}], " ", "*", 
+          " ", "axisSlopeAngleS"}]}], "]"}]}], ";", " ", 
+      RowBox[{"rangSin", " ", "=", " ", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"fromIndexS", " ", "/", " ", "toIndexS"}], ")"}], " ", "*", 
+        " ", "iangSin"}]}], ";", 
+      RowBox[{"axisSlopeAnglePP", " ", "=", " ", 
+       RowBox[{
+       "axisSlopeAngleP", " ", "+", " ", "iangSin", " ", "-", " ", 
+        "rangSin"}]}], ";", " ", 
+      RowBox[{"rayHeightP", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{"odz", ",", " ", "rayHeightS", ",", " ", 
+         RowBox[{"objectDistanceS", " ", "*", " ", "axisSlopeAngleP"}]}], 
+        "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"objectDistanceP", " ", "=", " ", 
+       RowBox[{"rayHeightP", " ", "/", " ", "axisSlopeAnglePP"}]}], ";", 
+      RowBox[{"{", 
+       RowBox[{
+       "paraxialRay", ",", " ", "radiusOfCurvatureS", ",", " ", 
+        "objectDistanceP", ",", " ", "rayHeightP", ",", " ", 
+        "axisSlopeAnglePP", ",", " ", "fromIndexS", ",", " ", "toIndexS"}], 
+       "}"}]}]}], "]"}], " ", "/;", " ", 
+   RowBox[{"radiusOfCurvatureS", " ", "\[NotEqual]", " ", "0"}]}]}]], "Input",\
+
+ InitializationCell->True,
+ CellChangeTimes->{{3.68915392864386*^9, 3.6891539432328377`*^9}, {
+   3.6891545630214148`*^9, 3.689154620681535*^9}, {3.689154662336261*^9, 
+   3.6891549910745497`*^9}, {3.689155021183586*^9, 3.68915520851857*^9}, {
+   3.68915524311277*^9, 3.68915528654455*^9}, {3.689155340081936*^9, 
+   3.68915535089616*^9}, {3.6891554105150433`*^9, 3.689155411005628*^9}, {
+   3.68915549453339*^9, 3.6891555219763613`*^9}, {3.6891558697075567`*^9, 
+   3.6891558807204437`*^9}, {3.6891564905390882`*^9, 3.689156511340666*^9}, {
+   3.6891565421620092`*^9, 3.689156551981163*^9}, {3.689156665006065*^9, 
+   3.689156685938869*^9}, {3.6891567619046297`*^9, 3.6891567867961407`*^9}, {
+   3.6891568341995277`*^9, 3.6891568469440527`*^9}, 3.689158261818541*^9, {
+   3.689158334085581*^9, 3.689158359452878*^9}, 3.6891590016730747`*^9, {
+   3.689159047383058*^9, 3.689159047755574*^9}, 3.68915916438855*^9, {
+   3.689159213162179*^9, 3.6891592134864283`*^9}, {3.689159312866692*^9, 
+   3.6891593169659023`*^9}, {3.689159375848995*^9, 3.6891593767826223`*^9}, {
+   3.689159969193123*^9, 3.689159971826297*^9}, 3.68916006646636*^9, {
+   3.689160149985228*^9, 3.6891601522207403`*^9}, {3.689160224312572*^9, 
+   3.6891602251871643`*^9}, 3.689160268280377*^9}],
+
+Cell["Third, a marginal ray crossing a flat surface.", "Text",
+ CellChangeTimes->{{3.689161081873644*^9, 3.6891610956661243`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"transitSurface", "[", 
+   RowBox[{
+   "marginalRay", ",", " ", "radiusOfCurvatureS_", ",", " ", 
+    "objectDistanceS_", ",", " ", "rayHeightS_", ",", " ", "axisSlopeAngleS_",
+     ",", " ", "fromIndexS_", ",", " ", "toIndexS_"}], "]"}], " ", ":=", " ", 
+  "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"With", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"rang", " ", "=", " ", 
+       RowBox[{
+        RowBox[{"-", 
+         RowBox[{"(", 
+          RowBox[{"ArcSin", "[", 
+           RowBox[{"(", 
+            RowBox[{"fromIndexS", " ", "/", " ", "toIndexS"}], ")"}], "]"}], 
+          ")"}]}], " ", "*", " ", 
+        RowBox[{"Sin", "[", "axisSlopeAngleS", "]"}]}]}], "}"}], ",", " ", 
+     RowBox[{"{", 
+      RowBox[{"marginalRay", ",", " ", "0", ",", " ", 
+       RowBox[{"objectDistanceS", " ", "*", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{"toIndexS", " ", "*", " ", 
+            RowBox[{"Cos", "[", 
+             RowBox[{"-", "rang"}], "]"}]}], ")"}], " ", "/", " ", 
+          RowBox[{"(", 
+           RowBox[{"fromIndexS", " ", "*", " ", 
+            RowBox[{"Cos", "[", "axisSlopeAngleS", "]"}]}], ")"}]}], ")"}]}], 
+       ",", " ", "rayHeightS", ",", " ", 
+       RowBox[{"-", "rang"}], ",", " ", "fromIndexS", ",", " ", "toIndexS"}], 
+      "}"}]}], "]"}], " ", "/;", " ", 
+   RowBox[{"radiusOfCurvatureS", " ", "\[Equal]", " ", "0"}]}]}]], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689161124339032*^9, 3.6891615427431602`*^9}}],
+
+Cell["\<\
+Fourth and finally, a marginal ray crossing a curved surface.\
+\>", "Text",
+ CellChangeTimes->{{3.689161735571868*^9, 3.68916175782314*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"transitSurface", "[", 
+   RowBox[{
+   "marginalRay", ",", " ", "radiusOfCurvatureS_", ",", " ", 
+    "objectDistanceS_", ",", " ", "rayHeightS_", ",", " ", "axisSlopeAngleS_",
+     ",", " ", "fromIndexS_", ",", " ", "toIndexS_"}], "]"}], " ", ":=", " ", 
+  
+  RowBox[{
+   RowBox[{"Block", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "odz", ",", "axisSlopeAngleP", ",", "iangSin", ",", "iang", ",", " ", 
+       "rangSin", ",", "axisSlopeAnglePP", ",", " ", "sagitta", ",", 
+       "rayHeightP", ",", " ", "objectDistanceP"}], "}"}], ",", " ", 
+     RowBox[{
+      RowBox[{"odz", " ", "=", " ", 
+       RowBox[{"objectDistanceS", " ", "\[Equal]", " ", "0"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"axisSlopeAngleP", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{"odz", ",", " ", "0", ",", " ", "axisSlopeAngleS"}], "]"}]}], 
+      ";", "\[IndentingNewLine]", 
+      RowBox[{"iangSin", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{"odz", ",", " ", 
+         RowBox[{"rayHeightS", " ", "/", " ", "radiusOfCurvatureS"}], ",", 
+         " ", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"objectDistanceS", " ", "-", " ", "radiusOfCurvatureS"}],
+              ")"}], " ", "/", " ", "radiusOfCurvatureS"}], ")"}], " ", "*", 
+          " ", 
+          RowBox[{"Sin", "[", "axisSlopeAngleS", "]"}]}]}], "]"}]}], ";", " ", 
+      RowBox[{"rangSin", " ", "=", " ", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"fromIndexS", " ", "/", " ", "toIndexS"}], ")"}], " ", "*", 
+        " ", "iangSin"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"iang", " ", "=", " ", 
+       RowBox[{"ArcSin", "[", "iangSin", "]"}]}], ";", 
+      RowBox[{"axisSlopeAnglePP", " ", "=", " ", 
+       RowBox[{"axisSlopeAngleP", " ", "+", " ", "iang", " ", "-", " ", 
+        RowBox[{"ArcSin", "[", "rangSin", "]"}]}]}], ";", " ", 
+      RowBox[{"sagitta", " ", "=", " ", 
+       RowBox[{"2", " ", "*", " ", "radiusOfCurvatureS", " ", "*", " ", 
+        RowBox[{
+         RowBox[{"Sin", "[", 
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"axisSlopeAngleP", " ", "+", " ", "iang"}], ")"}], " ", 
+           "/", " ", "2"}], "]"}], " ", "^", " ", "2"}]}]}], ";", 
+      RowBox[{"rayHeightP", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{"odz", ",", " ", "rayHeightS", ",", " ", 
+         RowBox[{"objectDistanceS", " ", "*", " ", "axisSlopeAngleP"}]}], 
+        "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"objectDistanceP", " ", "=", " ", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"radiusOfCurvatureS", " ", "*", " ", 
+          RowBox[{"Sin", "[", 
+           RowBox[{"axisSlopeAngleP", " ", "+", " ", "iang"}], "]"}], " ", 
+          "*", " ", 
+          RowBox[{"Cot", "[", "axisSlopeAnglePP", "]"}]}], ")"}], " ", "+", 
+        " ", "sagitta"}]}], ";", 
+      RowBox[{"{", 
+       RowBox[{
+       "marginalRay", ",", " ", "radiusOfCurvatureS", ",", " ", 
+        "objectDistanceP", ",", " ", "rayHeightP", ",", " ", 
+        "axisSlopeAnglePP", ",", " ", "fromIndexS", ",", " ", "toIndexS"}], 
+       "}"}]}]}], "]"}], " ", "/;", " ", 
+   RowBox[{"radiusOfCurvatureS", " ", "\[NotEqual]", " ", "0"}]}]}]], "Input",\
+
+ InitializationCell->True,
+ CellChangeTimes->{{3.68916182489361*^9, 3.68916183244836*^9}, 
+   3.689161874825377*^9, {3.6891619402404413`*^9, 3.689161947342264*^9}, {
+   3.689162007582062*^9, 3.689162074274214*^9}, {3.689162110258257*^9, 
+   3.6891622663971786`*^9}, {3.689162321664323*^9, 3.689162418320907*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["traceLine", "Subsection",
+ CellChangeTimes->{{3.689250739175432*^9, 3.689250743833856*^9}}],
+
+Cell[TextData[{
+ StyleBox["traceLine",
+  FontWeight->"Bold"],
+ " performs a ray trace for a given design for a specific spectral line and \
+ray height.  The caller passes in the design and desired spectral line, along \
+with a traceContext initialised with the required axialIncidence, \
+radiusOfCurvature (0), objectDistance (0), rayHeight, axisSlopeAngle (0), and \
+fromIndex (1). We walk through the design list, applying transitSurface for \
+each surface encountered, and return a traceContext whose objectDistance and \
+axisSlopeAngle contain the results of the ray trace."
+}], "Text",
+ CellChangeTimes->{{3.689236314442587*^9, 3.6892363849957333`*^9}, {
+  3.689236416324368*^9, 3.689236585104141*^9}, {3.689237486430808*^9, 
+  3.6892375122273817`*^9}, {3.689333847052794*^9, 3.689333850215644*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"traceLine", "[", 
+   RowBox[{"design_", ",", " ", "spectralLine_", ",", " ", "context_"}], 
+   "]"}], " ", ":=", " ", 
+  RowBox[{"context", " ", "/;", " ", 
+   RowBox[{
+    RowBox[{"Length", "[", "design", "]"}], "\[Equal]", "0"}]}]}]], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689236643099947*^9, 3.689236689872319*^9}, {
+  3.689236825555656*^9, 3.689236841095557*^9}, {3.689237254090581*^9, 
+  3.689237264527904*^9}, {3.6892373381778593`*^9, 3.689237344082535*^9}, {
+  3.689237424620023*^9, 3.689237472342145*^9}, {3.689333757212902*^9, 
+  3.6893337646719513`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"traceLine", "[", 
+   RowBox[{"design_", ",", " ", "spectralLine_", ",", " ", "context_"}], 
+   "]"}], " ", ":=", " ", 
+  RowBox[{
+   RowBox[{"Block", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"surf", ",", " ", "toIndexP", ",", " ", "contextP"}], "}"}], 
+     ",", " ", 
+     RowBox[{
+      RowBox[{"surf", " ", "=", " ", 
+       RowBox[{"First", "[", "design", "]"}]}], ";", " ", 
+      RowBox[{"toIndexP", " ", "=", " ", 
+       RowBox[{"If", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"surf", "[", 
+           RowBox[{"[", "indexOfRefraction", "]"}], "]"}], " ", ">", " ", 
+          "1"}], ",", 
+         RowBox[{
+          RowBox[{"surf", "[", 
+           RowBox[{"[", "indexOfRefraction", "]"}], "]"}], "+", " ", 
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"(", 
+              RowBox[{"dLine", " ", "-", " ", "spectralLine"}], ")"}], " ", 
+             "/", " ", 
+             RowBox[{"(", 
+              RowBox[{"cLine", " ", "-", " ", "fLine"}], ")"}]}], ")"}], " ", 
+           "*", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"surf", "[", 
+                RowBox[{"[", "indexOfRefraction", "]"}], "]"}], " ", "-", " ",
+                "1"}], ")"}], " ", "/", " ", 
+             RowBox[{"surf", "[", 
+              RowBox[{"[", "dispersion", "]"}], "]"}]}], ")"}]}]}], ",", 
+         RowBox[{"surf", "[", 
+          RowBox[{"[", "indexOfRefraction", "]"}], "]"}]}], "]"}]}], ";", " ", 
+      RowBox[{"contextP", " ", "=", " ", 
+       RowBox[{"transitSurface", "[", 
+        RowBox[{
+         RowBox[{"context", "[", 
+          RowBox[{"[", "axialIncidence", "]"}], "]"}], ",", " ", 
+         RowBox[{"surf", "[", 
+          RowBox[{"[", "curvatureRadius", "]"}], "]"}], ",", " ", 
+         RowBox[{"context", "[", 
+          RowBox[{"[", "objectDistance", "]"}], "]"}], ",", " ", 
+         RowBox[{"context", "[", 
+          RowBox[{"[", "rayHeight", "]"}], "]"}], ",", " ", 
+         RowBox[{"context", "[", 
+          RowBox[{"[", "axisSlopeAngle", "]"}], "]"}], ",", " ", 
+         RowBox[{"context", "[", 
+          RowBox[{"[", "fromIndex", "]"}], "]"}], ",", " ", "toIndexP"}], 
+        "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{
+        RowBox[{"Print", "[", 
+         RowBox[{
+         "\"\<traceLine: \>\"", ",", " ", "surf", ",", " ", "\"\< \>\"", ",", 
+          "context", ",", " ", "\"\< \>\"", ",", "contextP"}], "]"}], ";"}], 
+       " ", "*)"}], 
+      RowBox[{"traceLine", "[", 
+       RowBox[{
+        RowBox[{"Rest", "[", "design", "]"}], ",", " ", "spectralLine", ",", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"contextP", "[", 
+           RowBox[{"[", "axialIncidence", "]"}], "]"}], ",", " ", 
+          RowBox[{"contextP", "[", 
+           RowBox[{"[", "radiusOfCurvature", "]"}], "]"}], ",", " ", 
+          RowBox[{
+           RowBox[{"contextP", "[", 
+            RowBox[{"[", "objectDistance", "]"}], "]"}], " ", "-", " ", 
+           RowBox[{"surf", "[", 
+            RowBox[{"[", "edgeThickness", "]"}], "]"}]}], ",", " ", 
+          RowBox[{"contextP", "[", 
+           RowBox[{"[", "rayHeight", "]"}], "]"}], ",", 
+          RowBox[{"contextP", "[", 
+           RowBox[{"[", "axisSlopeAngle", "]"}], "]"}], ",", 
+          RowBox[{"contextP", "[", 
+           RowBox[{"[", "toIndex", "]"}], "]"}], ",", " ", "0"}], "}"}]}], 
+       "]"}]}]}], "]"}], "   ", "/;", " ", 
+   RowBox[{
+    RowBox[{"Length", "[", "design", "]"}], " ", ">", " ", "0"}]}]}]], "Input",\
+
+ InitializationCell->True,
+ CellChangeTimes->{{3.689237290012888*^9, 3.6892373335447903`*^9}, {
+   3.689237373231502*^9, 3.689237392679536*^9}, {3.6892376972446747`*^9, 
+   3.689237995663561*^9}, {3.6892404224347277`*^9, 3.689240457829268*^9}, 
+   3.689240491594458*^9, {3.689240573317327*^9, 3.6892409550604763`*^9}, {
+   3.689240985226795*^9, 3.6892411675265837`*^9}, 3.6892432720635033`*^9, {
+   3.689245097665256*^9, 3.689245114231127*^9}, {3.689245808710741*^9, 
+   3.689245844787607*^9}, {3.6892458982568827`*^9, 3.6892459018764143`*^9}, {
+   3.6892493625402117`*^9, 3.6892493954993887`*^9}, {3.689249568865677*^9, 
+   3.6892495753203487`*^9}, 3.689249648780675*^9, {3.689249688749722*^9, 
+   3.6892496911268787`*^9}, {3.689250235523086*^9, 3.689250237718607*^9}, {
+   3.689250350058591*^9, 3.6892503600184927`*^9}, {3.689250495361467*^9, 
+   3.6892505426625547`*^9}, {3.689251781543088*^9, 3.68925178674266*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["traceLens", "Subsection",
+ CellChangeTimes->{{3.689250715111676*^9, 3.6892507196556673`*^9}}],
+
+Cell[TextData[{
+ "The ",
+ StyleBox["traceLens",
+  FontWeight->"Bold"],
+ " function is a little bit of syntactic sugar to simplify invoking ",
+ StyleBox["traceLine",
+  FontWeight->"Bold"],
+ ".  It creates an initial traceContext for ",
+ StyleBox["traceLine",
+  FontWeight->"Bold"],
+ " which specifies the axialIncidence and rayHeight (computed from the clear \
+aperture of the design), invokes ",
+ StyleBox["traceLine",
+  FontWeight->"Bold"],
+ " with the supplied design and spectral line, then returns a list containing \
+the objectDistance and axisSlopeAngle resulting from the ray trace.\n\n\
+Definitions to access fields in the result from ",
+ StyleBox["traceLens",
+  FontWeight->"Bold"],
+ ":"
+}], "Text",
+ CellChangeTimes->{{3.689242494170699*^9, 3.689242658203723*^9}, {
+  3.6892617039130907`*^9, 3.6892617463055983`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"tlOD", " ", "=", " ", "1"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"tlSA", " ", "=", " ", "2"}], ";"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"traceLens", "[", 
+   RowBox[{
+   "design_", ",", " ", "clearAperture_", ",", " ", "spectralLine_", ",", " ",
+     "axialIncidenceS_"}], "]"}], " ", ":=", " ", 
+  RowBox[{"With", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"context", " ", "=", " ", 
+      RowBox[{"traceLine", "[", 
+       RowBox[{"design", ",", " ", "spectralLine", ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"axialIncidenceS", ",", " ", "0", ",", " ", "0", ",", " ", 
+          RowBox[{"clearAperture", " ", "/", " ", "2"}], ",", " ", "0", ",", 
+          " ", "1", ",", " ", "0"}], "}"}]}], "]"}]}], "}"}], ",", " ", 
+    "\[IndentingNewLine]", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"context", "[", 
+       RowBox[{"[", "objectDistance", "]"}], "]"}], ",", " ", 
+      RowBox[{"context", "[", 
+       RowBox[{"[", "axisSlopeAngle", "]"}], "]"}]}], "}"}]}], 
+   "]"}]}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689242685291748*^9, 3.689242751047943*^9}, {
+   3.689242821320527*^9, 3.689242989531364*^9}, {3.689248358465825*^9, 
+   3.689248466314485*^9}, {3.689248651999148*^9, 3.6892486525085793`*^9}, {
+   3.6892487406296577`*^9, 3.689248742722834*^9}, 3.689248773217209*^9, 
+   3.689248919580275*^9, {3.689251163239688*^9, 3.689251167005789*^9}, {
+   3.689261756167583*^9, 3.689261789340252*^9}, {3.689261891082656*^9, 
+   3.689261891427775*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["evaluateDesign", "Subsection",
+ CellChangeTimes->{{3.6892511868993673`*^9, 3.6892511895740433`*^9}}],
+
+Cell[TextData[{
+ "The ",
+ StyleBox["evaluateDesign",
+  FontWeight->"Bold"],
+ " function performs a ray trace on a given design with a specified clear \
+aperture and returns a designEvaluation list which includes the results for \
+the D line and calculation of spherical aberration, coma, and chromatic \
+aberration, along with the conventional acceptable upper bounds for these \
+quantities.\n\nDefinitions to access fields in the result from ",
+ StyleBox["evaluateDesign",
+  FontWeight->"Bold"],
+ ":"
+}], "Text",
+ CellChangeTimes->{{3.689251214149954*^9, 3.689251255278319*^9}, {
+  3.689262828574954*^9, 3.689262843578217*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"eDdMar", " ", "=", " ", "1"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eDdPar", " ", "=", " ", "2"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eDaberrLspher", " ", "=", " ", "3"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eDaberrOsc", " ", "=", " ", "4"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eDaberrLchrom", " ", "=", " ", "5"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eDMaxLspher", " ", "=", " ", "6"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"eDMaxOsc", " ", "=", " ", "7"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"eDMaxAchrom", " ", "=", " ", "8"}], ";"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   StyleBox["evaluateDesign",
+    FontWeight->"Plain"], "[", 
+   RowBox[{"design_", ",", " ", "clearApertureS_"}], "]"}], " ", ":=", " ", 
+  RowBox[{"With", "[", 
+   RowBox[{
+    RowBox[{"{", " ", 
+     RowBox[{
+      RowBox[{"dMar", " ", "=", " ", 
+       RowBox[{"traceLens", "[", 
+        RowBox[{
+        "design", ",", "clearApertureS", ",", " ", "dLine", ",", " ", 
+         "marginalRay"}], "]"}]}], ",", " ", 
+      RowBox[{"dPar", " ", "=", " ", 
+       RowBox[{"traceLens", "[", 
+        RowBox[{
+        "design", ",", "clearApertureS", ",", " ", "dLine", ",", " ", 
+         "paraxialRay"}], "]"}]}], ",", "\[IndentingNewLine]", 
+      RowBox[{"cMar", " ", "=", " ", 
+       RowBox[{"traceLens", "[", 
+        RowBox[{
+        "design", ",", "clearApertureS", ",", " ", "cLine", ",", " ", 
+         "marginalRay"}], "]"}]}], ",", " ", 
+      RowBox[{"fMar", " ", "=", " ", 
+       RowBox[{"traceLens", "[", 
+        RowBox[{
+        "design", ",", "clearApertureS", ",", " ", "fLine", ",", " ", 
+         "marginalRay"}], "]"}]}]}], "}"}], ",", " ", 
+    RowBox[{"(*", " ", 
+     RowBox[{
+      RowBox[{"Print", "[", 
+       RowBox[{
+       "\"\<dM \>\"", ",", " ", "dMar", ",", " ", "\"\< dP \>\"", ",", " ", 
+        "dPar", ",", " ", "\"\< cM \>\"", ",", " ", "cMar", ",", " ", 
+        "\"\< fM \>\"", ",", " ", "fMar"}], "]"}], ";"}], " ", "*)"}], 
+    "\[IndentingNewLine]", 
+    RowBox[{"With", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"aberrLspherS", " ", "=", "  ", 
+         RowBox[{
+          RowBox[{"dPar", "[", 
+           RowBox[{"[", "tlOD", "]"}], "]"}], " ", "-", " ", 
+          RowBox[{"dMar", "[", 
+           RowBox[{"[", "tlOD", "]"}], "]"}]}]}], ",", " ", 
+        RowBox[{"aberrOscS", " ", "=", " ", 
+         RowBox[{"1", "-", 
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"dPar", "[", 
+              RowBox[{"[", "tlOD", "]"}], "]"}], " ", "*", " ", 
+             RowBox[{"dPar", "[", 
+              RowBox[{"[", "tlSA", "]"}], "]"}]}], ")"}], " ", "/", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"Sin", "[", 
+              RowBox[{"dMar", "[", 
+               RowBox[{"[", "tlSA", "]"}], "]"}], "]"}], " ", "*", " ", 
+             RowBox[{"dMar", "[", 
+              RowBox[{"[", "tlOD", "]"}], "]"}]}], ")"}]}]}]}], ",", " ", 
+        RowBox[{"aberrLchromS", " ", "=", " ", 
+         RowBox[{
+          RowBox[{"fMar", "[", 
+           RowBox[{"[", "tlOD", "]"}], "]"}], " ", "-", " ", 
+          RowBox[{"cMar", "[", 
+           RowBox[{"[", "tlOD", "]"}], "]"}]}]}], ",", " ", 
+        RowBox[{"maxLspherS", " ", "=", " ", 
+         RowBox[{"0.0000926", "/", " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"Sin", "[", 
+             RowBox[{"dMar", "[", 
+              RowBox[{"[", "tlSA", "]"}], "]"}], "]"}], "^", "2"}], 
+           ")"}]}]}]}], "}"}], ",", " ", 
+      RowBox[{"(*", " ", 
+       RowBox[{
+        RowBox[{"Print", "[", 
+         RowBox[{
+         "\"\<Lspher \>\"", ",", " ", "aberrLspherS", ",", " ", 
+          "\"\< OSC \>\"", ",", " ", "aberrOscS", ",", " ", 
+          "\"\< Lchrom \>\"", ",", " ", "aberrLchromS", ",", " ", 
+          "\"\< Max Aberr \>\"", ",", " ", "maxLspherS"}], "]"}], ";"}], " ", 
+       "*)"}], 
+      RowBox[{"{", 
+       RowBox[{
+       "dMar", ",", " ", "dPar", ",", " ", "aberrLspherS", ",", " ", 
+        "aberrOscS", ",", " ", "aberrLchromS", ",", " ", "maxLspherS", ",", 
+        " ", "0.0025", ",", " ", "maxLspherS"}], "}"}]}], "]"}]}], 
+   "]"}]}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689251275932702*^9, 3.689251330104261*^9}, {
+  3.689251363088867*^9, 3.6892515274414167`*^9}, {3.6892516055150843`*^9, 
+  3.689251687369443*^9}, {3.6892615914763403`*^9, 3.689261691019445*^9}, {
+  3.689261826328794*^9, 3.68926189639112*^9}, {3.689261927665287*^9, 
+  3.689262459194483*^9}, {3.6892624904091167`*^9, 3.689262490748952*^9}, {
+  3.689262581713359*^9, 3.689262582166421*^9}, {3.689262622495235*^9, 
+  3.689262704026168*^9}, {3.6892628567671623`*^9, 3.689263005618211*^9}, {
+  3.68926304943746*^9, 3.689263065015181*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["evaluationReport", "Subsection",
+ CellChangeTimes->{{3.689263167002544*^9, 3.6892631699436626`*^9}}],
+
+Cell[TextData[{
+ StyleBox["evaluationReport",
+  FontWeight->"Bold"],
+ " edits the list result from ",
+ StyleBox["evaluateDesign",
+  FontWeight->"Bold"],
+ " into primate-readable text we can compare with the expected results.  This \
+function is not timed in the benchmark."
+}], "Text",
+ CellChangeTimes->{{3.689264023297306*^9, 3.689264070244688*^9}, {
+  3.689270054575411*^9, 3.689270063292931*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"nf", "[", "n_", "]"}], " ", ":=", " ", 
+   RowBox[{"ToString", "[", 
+    RowBox[{"NumberForm", "[", 
+     RowBox[{
+      RowBox[{"n", "//", "N"}], ",", " ", 
+      RowBox[{"{", 
+       RowBox[{"14", ",", " ", "11"}], "}"}]}], "]"}], "]"}]}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"evaluationReport", "[", "de_", "]"}], " ", ":=", 
+  "\[IndentingNewLine]", "  ", 
+  RowBox[{"\"\<   Marginal ray          \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{
+     RowBox[{"de", "[", 
+      RowBox[{"[", "eDdMar", "]"}], "]"}], "[", 
+     RowBox[{"[", "tlOD", "]"}], "]"}], "]"}], " ", "<>", " ", "\"\<   \>\"", 
+   " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{
+     RowBox[{"de", "[", 
+      RowBox[{"[", "eDdMar", "]"}], "]"}], "[", 
+     RowBox[{"[", "tlSA", "]"}], "]"}], "]"}], " ", "<>", " ", "\"\<\\n\>\"", 
+   " ", "<>", " ", "\"\<   Paraxial ray          \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{
+     RowBox[{"de", "[", 
+      RowBox[{"[", "eDdPar", "]"}], "]"}], "[", 
+     RowBox[{"[", "tlOD", "]"}], "]"}], "]"}], " ", "<>", " ", "\"\<   \>\"", 
+   " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{
+     RowBox[{"de", "[", 
+      RowBox[{"[", "eDdPar", "]"}], "]"}], "[", 
+     RowBox[{"[", "tlSA", "]"}], "]"}], "]"}], " ", "<>", " ", "\"\<\\n\>\"", 
+   " ", "<>", " ", "\"\<Longitudinal spherical aberration:        \>\"", " ", 
+   "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{"de", "[", 
+     RowBox[{"[", "eDaberrLspher", "]"}], "]"}], "]"}], " ", "<>", " ", 
+   "\"\<\\n\>\"", "<>", " ", 
+   "\"\<    (Maximum permissible):                 \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{"de", "[", 
+     RowBox[{"[", "eDMaxLspher", "]"}], "]"}], "]"}], " ", "<>", " ", 
+   "\"\<\\n\>\"", "<>", " ", 
+   "\"\<Offense against sine condition (coma):     \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{"de", "[", 
+     RowBox[{"[", "eDaberrOsc", "]"}], "]"}], "]"}], " ", "<>", " ", 
+   "\"\<\\n\>\"", "<>", " ", 
+   "\"\<    (Maximum permissible):                 \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{"de", "[", 
+     RowBox[{"[", "eDMaxOsc", "]"}], "]"}], "]"}], " ", "<>", " ", 
+   "\"\<\\n\>\"", "<>", " ", 
+   "\"\<Axial chromatic aberration:                \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{"de", "[", 
+     RowBox[{"[", "eDaberrLchrom", "]"}], "]"}], "]"}], " ", "<>", " ", 
+   "\"\<\\n\>\"", "<>", " ", 
+   "\"\<    (Maximum permissible):                 \>\"", " ", "<>", " ", 
+   RowBox[{"nf", "[", 
+    RowBox[{"de", "[", 
+     RowBox[{"[", "eDMaxAchrom", "]"}], "]"}], "]"}], " ", "<>", " ", 
+   "\"\<\\n\>\""}]}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.6892631861509037`*^9, 3.6892632088804207`*^9}, {
+  3.689263388375239*^9, 3.689263569779657*^9}, {3.689263617959659*^9, 
+  3.68926369499009*^9}, {3.689263738045642*^9, 3.689263812887888*^9}, {
+  3.689263878531761*^9, 3.689263957892557*^9}, {3.689264254577463*^9, 
+  3.6892643411346903`*^9}, {3.689264381278988*^9, 3.689264437961948*^9}, {
+  3.689264469781414*^9, 3.689264491193335*^9}, {3.6892648045329437`*^9, 
+  3.689264866349866*^9}, {3.689265147144142*^9, 3.689265218330907*^9}, {
+  3.689265254461972*^9, 3.689265268875408*^9}, {3.689265314014935*^9, 
+  3.689265422358959*^9}, {3.689265463657343*^9, 3.689265495536756*^9}, {
+  3.6892655616871653`*^9, 3.689265562051709*^9}, {3.68926559232085*^9, 
+  3.68926567714705*^9}, {3.689265713204343*^9, 3.689265754325465*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["validateResults", "Subsection",
+ CellChangeTimes->{{3.6892661952833023`*^9, 3.68926619861854*^9}}],
+
+Cell[TextData[{
+ "The ",
+ StyleBox["validateResults",
+  FontWeight->"Bold"],
+ " function compares a primate-readable report from ",
+ StyleBox["evaluationReport",
+  FontWeight->"Bold"],
+ " with the archival results from the reference implementation (which all \
+language implementations must reproduce character-by-character [apart from \
+trivia such as end of line conventions and trailing white space]).  It \
+returns a Boolean value indicating whether the results compared. This \
+function is not timed in the benchmark."
+}], "Text",
+ CellChangeTimes->{{3.689266217152368*^9, 3.689266280722228*^9}, {
+  3.689266335784801*^9, 3.6892663454197187`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"validateResults", "[", "er_", "]"}], " ", ":=", " ", 
+  RowBox[{"With", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"expectedResults", " ", "=", "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{"Reference", " ", 
+        RowBox[{"results", ".", "These"}], " ", "happen", " ", "to", " ", 
+        "be", " ", "derived", " ", "from", " ", "a", " ", "run", "\n", 
+        "        ", "on", " ", "Microsoft", " ", "Quick", " ", "BASIC", " ", 
+        "on", " ", "the", " ", "IBM", " ", 
+        RowBox[{"PC", "/", 
+         RowBox[{"AT", "."}]}]}], " ", "*)"}], "\[IndentingNewLine]", "  ", 
+      RowBox[{
+      "\"\<   Marginal ray          47.09479120920   0.04178472683\\n\>\"", 
+       " ", "<>", 
+       "\"\<   Paraxial ray          47.08372160249   0.04177864821\\n\>\"", 
+       "<>", "\"\<Longitudinal spherical aberration:        -0.01106960671\\n\
+\>\"", "<>", 
+       "\"\<    (Maximum permissible):                 0.05306749907\\n\>\"", 
+       "<>", "\"\<Offense against sine condition (coma):     0.00008954761\\n\
+\>\"", "<>", 
+       "\"\<    (Maximum permissible):                 0.00250000000\\n\>\"", 
+       "<>", "\"\<Axial chromatic aberration:                0.00448229032\\n\
+\>\"", "<>", 
+       "\"\<    (Maximum permissible):                 \
+0.05306749907\\n\>\""}]}], "}"}], ",", 
+    RowBox[{"er", " ", "\[Equal]", " ", "expectedResults"}]}], 
+   "]"}]}]], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.6892663517344837`*^9, 3.689266552892324*^9}, {
+   3.689266695751474*^9, 3.68926671267591*^9}, {3.689266755669044*^9, 
+   3.6892667693111763`*^9}, 3.689267572734391*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Running the Benchmark", "Subsection",
+ CellChangeTimes->{{3.689267564766514*^9, 3.689267568974882*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"standardNumberOfIterations", " ", "=", " ", "1000"}], ";"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"runBenchmark", "[", "iters_", "]"}], ":=", " ", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"ev", ",", " ", "stime", ",", " ", "etime", ",", " ", "er"}], 
+     "}"}], ",", " ", 
+    RowBox[{
+     RowBox[{"stime", " ", "=", " ", 
+      RowBox[{"AbsoluteTime", "[", "]"}]}], ";", " ", 
+     RowBox[{"Do", "[", 
+      RowBox[{
+       RowBox[{"ev", " ", "=", " ", 
+        RowBox[{"evaluateDesign", "[", 
+         RowBox[{"wyldLens", ",", " ", "wyldClearAperture"}], "]"}]}], ",", 
+       " ", 
+       RowBox[{"{", "iters", "}"}]}], "]"}], ";", " ", 
+     RowBox[{"etime", " ", "=", " ", 
+      RowBox[{
+       RowBox[{"AbsoluteTime", "[", "]"}], " ", "-", " ", "stime"}]}], ";", 
+     RowBox[{"er", " ", "=", " ", 
+      RowBox[{"evaluationReport", "[", "ev", "]"}]}], ";", " ", 
+     RowBox[{
+      RowBox[{"If", "[", 
+       RowBox[{
+        RowBox[{"!", 
+         RowBox[{"validateResults", "[", "er", "]"}]}], ",", " ", 
+        RowBox[{
+         RowBox[{
+         "Print", "[", "\"\<Error(s) in results!  This is VERY SERIOUS.\>\"", 
+          "]"}], ";"}]}], "]"}], "\[IndentingNewLine]", 
+      RowBox[{"Print", "[", 
+       RowBox[{
+       "\"\<Execution time \>\"", ",", " ", "etime", ",", " ", 
+        "\"\< seconds for \>\"", ",", " ", "iters", ",", " ", 
+        "\"\< iterations.\>\""}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"Print", "[", 
+      RowBox[{
+      "\"\<Execution time for \>\"", ",", " ", "standardNumberOfIterations", 
+       ",", " ", "\"\< iterations: \>\"", ",", " ", 
+       RowBox[{"etime", " ", "*", " ", 
+        RowBox[{"(", 
+         RowBox[{"standardNumberOfIterations", " ", "/", " ", "iters"}], 
+         ")"}]}], ",", " ", "\"\< seconds.\>\""}], "]"}], ";"}]}], 
+   "]"}]}]}], "Input",
+ InitializationCell->True,
+ CellChangeTimes->{{3.689267608903338*^9, 3.689267666347191*^9}, {
+  3.689268053217889*^9, 3.6892681907951*^9}, {3.689268386340795*^9, 
+  3.6892686474667377`*^9}, {3.689268715020855*^9, 3.6892688805507793`*^9}, {
+  3.6892689284223623`*^9, 3.689268949862178*^9}, {3.689269583223872*^9, 
+  3.689269592173998*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Perform Benchmark", "Subsection",
+ CellChangeTimes->{{3.689243022128498*^9, 3.689243026796908*^9}, {
+  3.689329397219419*^9, 3.689329400535284*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"runBenchmark", "[", "1000", "]"}]], "Input",
+ CellChangeTimes->{{3.689268201983446*^9, 3.689268220094679*^9}, {
+   3.689268660864452*^9, 3.6892686640646152`*^9}, 3.689268890207795*^9, {
+   3.689269618146862*^9, 3.689269619439087*^9}, {3.689276143583825*^9, 
+   3.689276145931863*^9}, {3.689332781027254*^9, 3.6893327815534973`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Execution time \"\>", "\[InvisibleSpace]", 
+   "5.609737`7.200487494301837", "\[InvisibleSpace]", "\<\" seconds for \"\>",
+    "\[InvisibleSpace]", "1000", "\[InvisibleSpace]", "\<\" iterations.\"\>"}],
+  SequenceForm[
+  "Execution time ", 5.609737`7.200487494301837, " seconds for ", 1000, 
+   " iterations."],
+  Editable->False]], "Print",
+ CellChangeTimes->{
+  3.689268672116795*^9, 3.6892689033602247`*^9, 3.689268974261179*^9, 
+   3.689269629148357*^9, 3.689269942866349*^9, 3.689270299399363*^9, {
+   3.68927514444139*^9, 3.689275163518035*^9}, 3.689276455086419*^9, 
+   3.689277128604334*^9, 3.6892775172750883`*^9, 3.6893297835318537`*^9, {
+   3.6893327918692503`*^9, 3.689332810746119*^9}, {3.689333158913356*^9, 
+   3.689333172149485*^9}, 3.689333890865179*^9, {3.6893339363455267`*^9, 
+   3.689333956611649*^9}}],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Execution time for \"\>", "\[InvisibleSpace]", "1000", 
+   "\[InvisibleSpace]", "\<\" iterations: \"\>", "\[InvisibleSpace]", 
+   "5.609737`7.200487494301837", "\[InvisibleSpace]", "\<\" seconds.\"\>"}],
+  SequenceForm[
+  "Execution time for ", 1000, " iterations: ", 5.609737`7.200487494301837, 
+   " seconds."],
+  Editable->False]], "Print",
+ CellChangeTimes->{
+  3.689268672116795*^9, 3.6892689033602247`*^9, 3.689268974261179*^9, 
+   3.689269629148357*^9, 3.689269942866349*^9, 3.689270299399363*^9, {
+   3.68927514444139*^9, 3.689275163518035*^9}, 3.689276455086419*^9, 
+   3.689277128604334*^9, 3.6892775172750883`*^9, 3.6893297835318537`*^9, {
+   3.6893327918692503`*^9, 3.689332810746119*^9}, {3.689333158913356*^9, 
+   3.689333172149485*^9}, 3.689333890865179*^9, {3.6893339363455267`*^9, 
+   3.689333956618432*^9}}]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{803, 933},
+WindowMargins->{{336, Automatic}, {Automatic, 36}},
+FrontEndVersion->"10.3 for Linux ARM (32-bit) (January 18, 2016)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[582, 22, 185, 3, 64, "Section"],
+Cell[770, 27, 1612, 31, 391, "Text"],
+Cell[CellGroupData[{
+Cell[2407, 62, 102, 1, 44, "Subsection"],
+Cell[2512, 65, 238, 5, 51, "Text"],
+Cell[2753, 72, 880, 25, 165, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3670, 102, 99, 1, 44, "Subsection"],
+Cell[3772, 105, 590, 11, 111, "Text"],
+Cell[4365, 118, 407, 11, 90, "Input"],
+Cell[4775, 131, 1130, 26, 152, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5942, 162, 100, 1, 44, "Subsection"],
+Cell[6045, 165, 1257, 30, 371, "Text"],
+Cell[7305, 197, 729, 20, 148, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8071, 222, 100, 1, 44, "Subsection"],
+Cell[8174, 225, 927, 19, 271, "Text"],
+Cell[9104, 246, 1574, 30, 115, "Input",
+ InitializationCell->True],
+Cell[10681, 278, 130, 1, 31, "Text"],
+Cell[10814, 281, 3760, 77, 276, "Input",
+ InitializationCell->True],
+Cell[14577, 360, 130, 1, 31, "Text"],
+Cell[14710, 363, 1549, 38, 156, "Input",
+ InitializationCell->True],
+Cell[16262, 403, 150, 3, 31, "Text"],
+Cell[16415, 408, 3620, 81, 356, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[20072, 494, 97, 1, 44, "Subsection"],
+Cell[20172, 497, 804, 13, 131, "Text"],
+Cell[20979, 512, 619, 13, 33, "Input",
+ InitializationCell->True],
+Cell[21601, 527, 4561, 103, 294, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[26199, 635, 99, 1, 44, "Subsection"],
+Cell[26301, 638, 827, 22, 151, "Text"],
+Cell[27131, 662, 1595, 37, 171, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[28763, 704, 106, 1, 44, "Subsection"],
+Cell[28872, 707, 628, 14, 131, "Text"],
+Cell[29503, 723, 4937, 119, 486, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[34477, 847, 106, 1, 44, "Subsection"],
+Cell[34586, 850, 400, 10, 51, "Text"],
+Cell[34989, 862, 3557, 80, 294, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[38583, 947, 104, 1, 44, "Subsection"],
+Cell[38690, 950, 652, 14, 111, "Text"],
+Cell[39345, 966, 1669, 34, 253, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[41051, 1005, 109, 1, 44, "Subsection"],
+Cell[41163, 1008, 2283, 55, 212, "Input",
+ InitializationCell->True]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[43483, 1068, 154, 2, 44, "Subsection"],
+Cell[CellGroupData[{
+Cell[43662, 1074, 356, 5, 32, "Input"],
+Cell[CellGroupData[{
+Cell[44043, 1083, 872, 16, 22, "Print"],
+Cell[44918, 1101, 874, 16, 22, "Print"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)

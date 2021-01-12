@@ -1,0 +1,65 @@
+
+                   ALGOL 60 Floating Point Benchmark
+                           Development Notes
+                             May 9th, 2014
+                                
+This directory contains an implementation of the Fourmilab floating
+point benchmark in ALGOL 60, conforming to the standard of the 1976
+Modified Report.  This program has been tested with the GNU MARST
+system which translates ALGOL 60 to C:
+
+    http://www.gnu.org/software/marst/
+
+The program was ported from the Algol 68 implementation, which was
+entirely straightforward.  I ran timing tests under Ubuntu Linux,
+and after adjusting iteration counts to obtain a run time of about
+five minutes, I ran three runs of the ALGOL 60 program with an
+iteration count of 40,263,820 with timings in seconds of:
+    298.43
+    298.91
+    290.04
+for a mean time of 295.79 seconds.
+
+For a control, I ran the C implementation of the benchmark for
+157,894,736 iterations, yielding timings of:
+    292.945
+    293.858
+    293.974
+with a mean of 293.592 seconds.
+
+The relative execution time of the benchmark in ALGOL 60 compared
+to the C reference is:
+
+    (295.79 / 293.592) * (157894736 / 40263820) = 3.951
+    
+ALGOL 60, as defined in the standard, includes no facilities for
+input and output: it was originally envisioned as a way of specifying
+algorithms and not as a practical programming language.  Various
+computer implementations of ALGOL 60 have improvised their own
+extensions for input and output.  This program uses those
+specified by MARST.  Output of floating point numbers is
+provided by:
+
+    outreal(<channel>, <real value>);
+    
+where the real value is formatted according to a C format of ".12g"
+(REAL_FMT in algol.h), which cannot be changed by the user when
+formatting output.  Consequently, output from the ALGOL 60 version of
+the benchmark is constrained to use this format, and it is the
+responsibility of the person running the benchmark to verify the
+results conform to those expected.  On this run. using MARST 2.7 with
+GCC 4.8.1 under Ubuntu Linux 3.11.0-15 x86_64, I have manually
+verified the results and determined them to be correct.
+
+To make it easier to compare output of this benchmark with that of
+other language implementations, I have added a non-portable
+procedure called outbigreal() which uses MARST's inline()
+facility to output numbers which would otherwise be output with
+too few decimal places by outreal().  Since the ALGOL 60 standard
+includes no I/O, any program with I/O is consequently nonstandard
+and non-portable, so this hack does not compromise the purity of
+the program.  A separate Perl program, reformat.pl, reformats the
+output of the benchmark (which, due to MARST's rudimentary output
+facilities, cannot conform to that produced by other languages)
+into the standard format and verifies it against output from the
+reference implementation.

@@ -1,0 +1,15 @@
+%!
+% determine floating point precision by
+% comparing 1 + 1/2^N and 1
+% This assumes a binary representation of floats
+% Arbitrarily stops searching past 100 bits
+
+-1
+1 1 100
+{
+dup neg 2 exch exp
+1.0 add
+1.0 eq { exch pop exit }{pop} ifelse
+} for
+(Binary precision / mantissa size: ) print =
+%%EOF

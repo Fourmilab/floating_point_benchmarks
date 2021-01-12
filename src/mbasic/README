@@ -1,0 +1,56 @@
+
+This directory contains an implementation of the floating point
+benchmark in classic BASIC, such as the BASICA supplied with the
+IBM PC and Microsoft's GW-BASIC, which ran on early versions of
+MS-DOS.  This BASIC supports double precision arithmetic and
+denotes double precision values by a suffix of "#" on the
+variable name, for example "V3#".  Integers are denoted by a
+suffix of "%", and strings, as in many other dialects of BASIC,
+by "$".  These suffix characters can be used to indicate the
+type of arrays and functions.
+
+This program was created by translating the original Marinchip
+QBASIC program to Microsoft BASIC, using the translation table
+of original long QBASIC names to gnarly Microsoft two character
+gibberish at the top of the program.
+
+This program produces results identical to the last decimal
+place of all other implementations of the benchmark when run on
+a proper BASIC implementation, but the details of how the output
+is formatted is slightly different, as the original QBASIC
+output format was preserved unchanged.  When the benchmark was
+subsequently translated to C, the output was streamlined to be
+more compact.  I have preserved the original output format here
+in the interest of historical authenticity. The
+correct_results.txt used to validate the generated output
+reflects that format.
+
+This program runs without modification on Michael Haardt's "Bas"
+BASIC interpreter:
+
+    http://www.moria.de/~michael/bas/
+    
+The tests here were run on version 2.4 of Bas.
+
+Timing tests:
+
+    fbench.bas 3,056,858 iterations
+         292.69
+         292.66
+         289.96
+         290.40
+         292.50
+    Mean 291.64  95.4052 usec/iter
+
+To compare this with the reference of C, I ran the C benchmark
+as follows.
+
+    fbench_ansi.c compiled with gcc -O3  166,051,660 iterations
+         296.89
+         296.37
+         296.29
+         296.76
+         296.37
+    Mean 296.536  1.7858 usec/iter
+
+Run time ratio compared to C: 53.4243

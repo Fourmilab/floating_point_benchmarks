@@ -1,0 +1,71 @@
+
+                    Simula Floating Point Benchmark
+                           Development Notes
+                            June 12th, 2014
+
+This directory contains an implementation of the Fourmilab floating
+point benchmark in Simula, conforming to the standard of the 1985
+Simula standard, which codified and extended the language previously
+known as Simula 67.  (The name of the language is variously written
+as "SIMULA" and "Simula"--in the early years, it was usually written
+in all capitals as were the names most programming  languages.
+More recently "Simula" is most commonly used, since all-capital names
+are reserved for languages whose names are acronyms.)  This program has
+been tested with the GNU Cim system which translates Simula to C:
+
+    http://www.gnu.org/software/cim/
+
+The program was ported from the ALGOL 60 implementation, which was
+straightforward, as expected since Simula is largely a superset of
+ALGOL 60.  Changes were mostly limited to adapting to different lexical
+conventions: Simula does not permit spaces within identifiers, and uses
+different tokens for operators such as exponentiation, not equal, and
+subscripting.  Input/output in Simula is entirely different from that
+in the ALGOL 60 compiler I had used, and so the output part of the
+program was completely rewritten.
+
+After these changes were made, the program compiled and worked the
+first time, producing correct results which were identical to all
+other language implementations of the benchmark.  But at this point
+it was essentially an ALGOL 60 program being compiled by its big
+brother Simula.  I then revised the program to do things "the
+Simula way", using classes and arrays of references to turn what
+were cryptic array subscripts in the original ALGOL 60 to readable
+code.  Simula's mathematical function library is more complete than
+that of ALGOL 60, so I was able to replace the definitions of the
+cotangent and arc sin functions in the program with the native
+Simula functions.
+
+Performance tests were run under Cim 5.1-x86_64 with the C
+language output from the Simula compiler compiled with GCC 4.8.1,
+producing x86_64 code.
+
+I ran timing tests under Ubuntu Linux, and after adjusting iteration
+counts to obtain a run time of about five minutes, I ran four runs of
+the Simula benchmark with an iteration count of 99,000,000 with timings
+in seconds of:
+    313.82
+    316.80
+    318.09
+    304.36
+for a mean time of 312.289 seconds, or 3.154 microseconds per
+iteration.
+
+As a control, I ran the ANSI C implementation of the benchmark for
+201,203,369 iterations, yielding timings of:
+    293.92
+    309.67
+    301.86
+    303.81
+with a mean of 302.315 seconds, or 1.503 microseconds per iteration.
+
+The relative execution time of the benchmark in Simula compared
+to the C reference is thus:
+
+    3.154 / 1.503 = 2.099
+
+If you run the benchmark with a large iteration count, you may see
+a message in the output listing the number of garbage collections
+and the time spent doing them.  This will appear as an apparent
+discrepancy with the reference correct output program, but may be
+ignored, as it does not indicate an error in the results computed.

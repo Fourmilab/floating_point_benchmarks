@@ -1,0 +1,26 @@
+              FreeBASIC Floating Point Benchmark
+                      Development Notes
+                     November 4th, 2017
+
+Timing tests:
+
+    fbench.bas 127,172,531 iterations
+        292.51
+        292.33
+        291.99
+        291.75
+        292.08
+    Mean 296.54  2.3318 usec/iter
+
+To compare this with the reference of C, I ran the C benchmark
+as follows.
+
+    fbench_ansi.c compiled with gcc -O3  166,051,660 iterations
+        296.89
+        296.37
+        296.29
+        296.76
+        296.37
+    Mean 296.536  1.7858 usec/iter
+
+Run time ratio compared to C: 1.3057

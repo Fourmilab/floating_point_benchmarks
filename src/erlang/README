@@ -1,0 +1,60 @@
+
+                    Erlang Floating Point Benchmark
+                           Development Notes
+                            June 16th, 2014
+
+This directory contains an implementation of the Fourmilab floating
+point benchmark in Erlang, 
+
+    http://www.erlang.org/
+
+
+Performance tests were run under Erlang/OTP 17, emulator version
+6.0.  This is an x86-64 build which I ran under Xubuntu kernel
+3.11.0-14.
+
+I ran timing tests, and after adjusting iteration counts to obtain
+a run time of about five minutes, I ran four runs of the Erlang
+benchmark with an iteration count of 21,386,789 with timings in
+seconds of:
+    298.54
+    301.06
+    301.04
+    299.59
+for a mean time of 300.06 seconds, or 14.030 microseconds per
+iteration.  This benchmark was run using the standard Erlang
+bytecode compiler, whose output is converted to threaded
+code when the program is loaded by the runtime system.
+
+One some platforms, including the Linux x86 system on which I
+ran this benchmark, Erlang's HIPE (HIgh Performance Erlang)
+system supports compilation into native machine code.  I recompiled
+the program with:
+    c(fbench, [native, {hipe, [o3]}]).
+and after adjusting the iteration count to obtain a run time of
+about five minutes, I obtained the following timings for runs
+with an iteration count of 53,152,290:
+    293.82
+    292.36
+    291.91
+    292.37
+with a mean time of 292.62 seconds, or 5.505 microseconds per
+iteration.
+
+As a control, I ran the ANSI C implementation of the benchmark for
+201,203,369 iterations, yielding timings of:
+    293.92
+    309.67
+    301.86
+    303.81
+with a mean of 302.315 seconds, or 1.503 microseconds per iteration.
+
+The relative execution time of the benchmark for Erlang bytecode
+compared to the C reference is thus:
+
+    14.030 / 1.503 = 9.335
+
+and the relative performance for the Erlang compilation to native
+code is:
+
+    5.505 / 1.503 = 3.663

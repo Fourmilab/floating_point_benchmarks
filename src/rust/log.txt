@@ -1,0 +1,138 @@
+
+2021 January 10
+
+Tried to recompile with Rust 1.43.0.  It had last been built with Rust
+0.13.0 on 2014-10-25.
+
+Died with improper syntax for Unicode escape in a string constant.  It
+used to be "\u00B5", and is now "`\u{00B5}".
+
+Died with three "invalid suffix `u` for integer literal" where we had
+specified a constant like:
+    (surf, n + 1u, sline, cprime)
+Removed the "u" in each case and all was well.
+
+With these fixed, the build now died with "can't find crate for `time`"
+for:
+    extern crate time;
+You now have to declare such dependencies in a section of the Cargo.toml
+file as follows:
+    [dependencies]
+    time = "0.1"
+This downloaded and built the "time" crate and we got past this point.
+
+Next, the build process crashed with the scary:
+    error: incremental compilation: could not create session directory
+        lock file: No locks available (os error 37)
+    thread 'rustc' panicked at 'trying to get session directory from
+        `IncrCompSession`: NotInitialized',
+        src/librustc_session/session.rs:670:48
+    note: run with `RUST_BACKTRACE=1` environment variable to display
+        a backtrace
+    error: internal compiler error: unexpected panic
+    note: the compiler unexpectedly panicked. this is a bug.
+Well, it turns out this as due to my temerity in trying to compile in a
+directory on my file server which was NFS mounted.  Rust joins
+LibreOffice in not knowing how to lock a file on an NFS mount and falls
+on its face.  I got around this by modifying the Makefile to build
+with:
+    CARGO_INCREMENTAL=0 cargo build
+which disabled the "incremental compilation" "feature", thus dispensing
+with the need for the lock file.
+
+Died with ten "unknown format trait `f`" in format strings for output
+messages.  It appears that for the default floating point decimal
+format, you must now specify no "trait", which selects the "Display"
+trait.  You only specify a trait if you want exponential, hex, etc.
+Removed the "f"s and got past this pothole.  This appears to be Rust's
+way to say, "'f' the programmer."
+
+Moving right along, we died with seven instances of "cannot find type
+`uint` in this scope", because that generic unsigned type has been
+replaced by a requirement to specify the size, except for the
+architecture-dependent "isize" and "usize".  I replaced the axial
+incidence constants with "u8", the spectral line index with "usize"
+(you can't index an array with, say, a "u32"), and the iteration count
+with "u32".
+
+The next bomb to go off was on:
+    for _ in range(1, iterations) {
+which apparently you now write, Perl-like, as:
+    for _ in (1 .. iterations) {
+
+Then, it's extracting the dagger from between our shoulder blades at:
+    run_benchmark(ITERATIONS, wyld_lens, wyld_clear_aperture);
+where it complains:
+    expected reference, found array of 4 elements
+    help: consider borrowing here: `&wyld_lens`
+All right, let's consider it.  The ampersand made it shut up.
+
+The one remaining error was:
+     TraceContext{ray: axial_incidence,...
+     expected `i8`, found `u8`
+OK, I goofed: when I replaced the "uint" in the axial incidence "ray"
+field, I wrote "i8" instead of "u8".  Fixed.
+
+Now it compiles and builds without errors and, at first glance, appears
+to run OK.  Now let's deal with the seven warnings littering the
+compile transcript.
+    use time::precise_time_ns;
+        unused import: `time::precise_time_ns`
+    OK, I removed it.
+
+    (Three instances)
+        unnecessary parentheses around...
+    Dammit, I've been programming for more than fifty years, and I
+    think I know a bit more than you, upstart fidgety compiler, about
+    where parentheses make the code more readable to *humans*, if not
+    your persnickety parser.  I removed them to shut it up, although
+    I especially think the parentheses around the range in a for
+    statement make it much clearer what is the argument to "in".
+
+    This left three warnings about the use of floating point constants
+    as cases in a match statement being deprecated and slated to be
+    declared errors in a future release.  Now, I've been aware that
+    "The test for equality beween non-integers may not be meaningful"
+    ever since that Univac FORTRAN IV nag back in 1967, but in this
+    case my use is absolutely correct.  All I'm testing for is whether
+    a surface is planar by testing its radius of curvature from the
+    design table for zero (which we use to indicate a flat surface).
+    This is not the result of a computation: it is simply a value from
+    a table, and one guaranteed to be exactly representable by an IEEE
+    64-bit floating point number, so the warning is just silly.  But to
+    get a clean compile, I rewrote the logic to eliminate the match
+    statements and replace them with ifs, which don't mind when I make
+    exactly the same test for equality to zero.
+
+Attempted to replace the ugly static declarations for axial incidence
+with an enum.  Gave up an hour later, admitting utter defeat.  I
+clearly do not understand what is going on, and that hideously opaque
+manual doesn't help.  I then discovered that they've now added a const
+declaration, so I changed them to that, which at least makes it clear
+what they really are.
+
+Since we have consts, changed the spectral line declarations to them
+also.
+
+Made the fixed definitions ITERATIONS, WYLD_LENS, and
+WYLD_CLEAR_APERTURE consts as well.  Of course, I had to make the
+latter two all caps to shut up Miss Manners.
+
+Ran C (GCC 7.5.0) version for benchmark reference, 380177543
+iterations.
+        289.903
+        292.049
+        290.431
+        289.902
+        290.850
+Mean    290.627     usec/iter 0.7645
+
+Ran the Rust benchmark, 340_023_965 iterations.
+        298.034
+        299.200
+        298.551
+        298.242
+        297.463
+Mean    298.298     usec/uter 0.8772
+
+Thus the execution time ratio of Rust to C is 1.1476.

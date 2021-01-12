@@ -1,0 +1,62 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 300 300
+%%Creator: Gernot Hoffmann
+%%Title: Float Test
+%%CreationDate: January 05/2007
+
+% Test by 'SaGS'.
+
+/mm {2.834646 mul} def
+
+/envron { % - envron base digits roundingmode
+2.0
+{ dup dup 1.0 add exch sub 1.0 ne { exit } if
+dup add
+} loop
+2.0
+{ 2 copy add 2 index sub 0.0 ne { exit } if
+dup add
+} loop
+2 copy add 2 index sub cvi 3 1 roll pop
+2 copy exch 1.0 sub add exch sub 0.0 eq { 0 } { 1 } ifelse
+1.0 0
+{ 1 add
+exch 3 index mul
+dup dup 1.0 add exch sub 1.0 ne { exit } if
+exch
+} loop
+pop exch
+} def
+
+0 setgray
+/fh 8 mm def
+/Helvetica findfont fh scalefont setfont
+
+envron
+/CP exch def
+/DI exch def
+/BA exch def
+/DD BA DI exp log def
+
+%() =
+%(Rounding Mode: ) print 0 eq { (chop) } { (proper rounding) } ifelse =
+%(Digits \(in specified base\): ) print =
+%(Base: ) print =
+%flush
+
+/x 10 mm def
+/y 90 mm def
+/buf 20 string def
+x y moveto
+(Rounding: ) show CP 0 eq {(Chop)}{(Proper Rounding)} ifelse show
+/y y 10 mm sub def
+x y moveto
+(Base: ) show BA buf cvs show
+/y y 10 mm sub def
+x y moveto
+(Digits in Base: ) show DI buf cvs show
+/y y 10 mm sub def
+x y moveto
+(Digits in Base 10: ) show DD buf cvs show
+
+showpage

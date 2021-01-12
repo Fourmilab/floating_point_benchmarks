@@ -1,0 +1,25 @@
+MPFR C++ was developed by Pavel Holoborodko and is available
+from his Web page:
+
+    http://www.holoborodko.com/pavel/mpfr/
+    
+where the current version is always posted.  For convenience,
+this release of FBENCH includes a copy of the 3.6.3 release
+with which it was developed.  Please see the "copying.txt" file
+for conditions of use and copying this software.
+
+MPFR C++ requires that you have installed the GNU GMP:
+
+    https://gmplib.org/
+    
+and MPFR:
+
+    http://www.mpfr.org/
+    
+libraries.  These are included in or available for many popular
+Linux distributions, so you may be able to install them on your
+system with its package manager if they aren't already installed.
+
+The entire definition is within the header file mpreal.h, so no
+build is required: it is simply included within a program that
+uses it.
