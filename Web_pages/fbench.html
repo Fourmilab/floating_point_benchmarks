@@ -1,0 +1,750 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>FBENCH: Floating Point Benchmark</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link rel="stylesheet" href="/documents/styles/standard_screen.css" type="text/css" />
+<style type="text/css">
+    table.results td.ct {
+        text-align: center;
+        vertical-align: top;
+    }
+
+    td.ccnotes {
+        text-align: justify;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+    }
+
+    th.d {
+        background-color: #C0C0C0;
+    }
+
+    tr.ltgrey {
+        background-color: #E0E0E0;
+    }
+
+    .e {
+        background-color: #E0E0E0;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .ec {
+        background-color: #E0E0E0;
+        text-align: center;
+    }
+</style>
+<meta name="author" content="John Walker" />
+<meta name="description" content="FBENCH: Floating Point Benchmark" />
+<meta name="keywords" content="fbench, benchmark, floating, point, trig, trigonometric, function" />
+<meta name="robots" content="index" />
+</head>
+
+<body class="standard">
+
+<center>
+<h1 style="font-family : Courier, monospace; letter-spacing: 8px; margin-bottom: 0px;">fbench</h1>
+<h3 style="margin-top: 0px;">
+Trigonometry Intense Floating Point Benchmark
+</h3>
+by <a href="/">John Walker</a><br />
+December 1980<br />
+Last update: January 22nd, 2018
+</center>
+
+<hr />
+
+<h3>Introduction</h3>
+
+<p class="j">
+<b>Fbench</b> is a complete optical design raytracing algorithm,
+shorn of its user interface and recast into portable C. It not only
+determines execution speed on an extremely floating point (including
+trigonometric functions) intensive real-world application, it checks
+accuracy on an algorithm that is exquisitely sensitive to errors. The
+performance of this program is typically far more sensitive to
+changes in the efficiency of the trigonometric library routines than
+the average floating point program.
+</p>
+
+<p class="j">
+The benchmark may be compiled in two modes. If the symbol
+<tt>INTRIG</tt> is defined, built-in trigonometric and square root
+routines will be used for all calculations. Timings made with
+<tt>INTRIG</tt> defined reflect the machine's basic floating point
+performance for the arithmetic operators. If <tt>INTRIG</tt> is not
+defined, the system library <tt>&lt;math.h&gt;</tt> functions are used.
+Results with <tt>INTRIG</tt> not defined reflect the system's library
+performance and/or floating point hardware support for trig
+functions and square root. Results with <tt>INTRIG</tt> defined are a
+good guide to general floating point performance, while results
+with <tt>INTRIG</tt> undefined indicate the performance of an application
+which is math function intensive.
+</p>
+
+<p class="j">
+Special note regarding errors in accuracy: this program has
+generated numbers identical to the last digit it formats and
+checks on the following machines, floating point
+architectures, and languages:
+</p>
+
+<center>
+<table width="80%" cellpadding="3">
+<tr><th bgcolor="#C0C0C0">Machine</th> <th bgcolor="#C0C0C0">Language</th> <th bgcolor="#C0C0C0">Floating Point Format</th></tr>
+<tr class="ltgrey">
+<td>Marinchip 9900</td> <td>QBASIC</td> <td>IBM 370 double-precision (REAL&nbsp;*&nbsp;8) format</td>
+</tr>
+
+<tr class="ltgrey">
+<td class="e" rowspan="5">IBM PC /XT/ AT, <br />
+    Intel i<em>x</em>86 / Pentium&nbsp;<em>n</em><br />
+    Intel/AMD <em>x</em>86_64</td>
+<td>Lattice C</td> <td>IEEE 64 bit, 80 bit temporaries</td>
+</tr>
+<tr class="ltgrey"> <td>High C</td> <td>same, in line 80<em>x</em>87 code</td></tr>
+<tr class="ltgrey"> <td class="e">GCC/G++</td> <td>same, native FPU code<br />
+                                     <tt>long double</tt> (Intel 80 bit)<br />
+                                     <tt>__float128</tt> (128 bit)<br />
+                                     GNU MPFR library (128 and 512 bit)</td></tr>
+<tr class="ltgrey"> <td>BASICA</td> <td>&ldquo;Double precision&rdquo;</td></tr>
+<tr class="ltgrey"> <td>Quick BASIC</td> <td>IEEE double precision, software routines</td></tr>
+
+<tr class="ltgrey">
+<td>Sun 3</td> <td>C</td> <td>IEEE 64 bit, 80 bit temporaries,
+ in-line 68881 code, in-line FPA code.
+</td></tr>
+
+<tr class="ltgrey">
+<td>MicroVAX II</td> <td>C</td> <td>VAX &ldquo;G&rdquo; format floating point
+</td></tr>
+
+<tr class="ltgrey">
+<td>Macintosh Plus</td> <td>MPW C</td> <td>SANE floating point, IEEE 64 bit format
+ implemented in ROM.
+</td></tr>
+</table>
+</center>
+
+<p class="j">
+Inaccuracies reported by this program should be taken
+<strong>very seriously indeed</strong>, as the program has been
+demonstrated to be invariant under changes in floating point
+format, as long as the format is a recognised double precision
+format. If you encounter errors, please remember that they are
+just as likely to be in the floating point editing library or
+the trigonometric libraries (unless compiled with
+<tt>INTRIG</tt> defined) as in the low level operator code.
+Now that virtually all computers use IEEE floating point format,
+differences in results are almost certainly indicative of errors
+in code generation, optimisation, or library routines.
+</p>
+
+<p class="j">
+The benchmark assumes that results are basically reliable, and
+only tests the last result computed against the reference. If
+you're running on a suspect system you can compile this program
+with <tt>ACCURACY</tt> defined. This will generate a version which
+executes as an infinite loop, performing the ray trace and
+checking the results on every pass. All incorrect results will
+be reported.
+</p>
+
+<h3>Benchmark Results for Various Systems</h3>
+
+<p class="j">
+Representative timings are given below. All have been
+normalised as if run for 1000 iterations.
+</p>
+
+<center>
+<table width="80%" cellpadding="2" class="results">
+<tr><th bgcolor="#C0C0C0" colspan="2"> Time in Seconds</th> <th bgcolor="#C0C0C0" rowspan="2">Computer, Compiler, and Notes</th></tr>
+<tr><th bgcolor="#C0C0C0"> Normal</th> <th bgcolor="#C0C0C0">INTRIG</th></tr>
+
+<tr class="ltgrey"> <td class="ct"> 3466.00</td> <td class="ct">4031.00</td> <td class="ccnotes">Commodore 128, 2 MHz 8510 with software floating
+ point. Abacus Software/Data-Becker Super-C 128,
+ version 3.00, run in fast (2 MHz) mode. Note:
+ the results generated by this system differed
+ from the reference results in the 8th to 10th
+ decimal place.
+</td></tr>
+
+<tr class="ltgrey"> <td class="ct"> 3290.00</td> <td class="ct">&nbsp;</td> <td class="ccnotes">IBM PC/AT 6 MHz, Microsoft/IBM BASICA version A3.00.
+ Run with the &ldquo;/d&rdquo; switch, software floating point.
+</td></tr>
+
+<tr class="ltgrey"> <td class="ct"> 2131.50</td> <td class="ct">&nbsp;</td> <td class="ccnotes">IBM PC/AT 6 MHz, Lattice C version 2.14, small model.
+ This version of Lattice compiles subroutine
+ calls which either do software floating point
+ or use the 80x87. The machine on which I ran
+ this had an 80287, but the results were so bad
+ I wonder if it was being used.
+</td></tr>
+
+<tr class="ltgrey"> <td class="ct"> 1598.00</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Macintosh Plus, MPW C, SANE Software floating point.
+</td></tr>
+
+<tr class="ltgrey"> <td class="ct"> 1582.13</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Marinchip 9900 2 MHz, QBASIC compiler with software
+ floating point. This was a QBASIC version of the
+ program which contained the identical algorithm.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 404.00</td> <td class="ct">&nbsp;</td> <td class="ccnotes">IBM PC/AT 6 MHz, Microsoft QuickBASIC version 2.0.
+ Software floating point.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 165.15</td> <td class="ct">&nbsp;</td> <td class="ccnotes">IBM PC/AT 6 MHz, Metaware High C version 1.3, small
+ model. This was compiled to call subroutines for
+ floating point, and the machine contained an 80287
+ which was used by the subroutines.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 143.20</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Macintosh II, MPW C, SANE calls. I was unable to
+ determine whether SANE was using the 68881 chip or
+ not.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 121.80</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Sun 3/160 16 MHz, Sun C
+ Compiled with &ldquo;-fsoft&rdquo; switch
+ which executes floating point in software.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 78.78</td> <td class="ct">110.11</td> <td class="ccnotes">IBM RT PC (Model 6150). IBM AIX 1.0 C compiler
+ with &ldquo;-O&rdquo; switch.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 75.2</td> <td class="ct">254.0</td> <td class="ccnotes">Microsoft Quick C 1.0, in-line 8087 instructions,
+ compiled with 80286 optimisation on. (Switches
+ were &ldquo;-Ol -FPi87-G2 -AS&rdquo;). Small memory model.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 69.50</td> <td class="ct">&nbsp;</td> <td class="ccnotes">IBM PC/AT 6 MHz, Borland Turbo BASIC 1.0. Compiled
+ in &ldquo;8087 required&rdquo; mode to generate in-line
+ code for the math coprocessor.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 66.96</td> <td class="ct">&nbsp;</td> <td class="ccnotes">IBM PC/AT 6 MHz, Microsoft QuickBASIC 4.0. This
+ release of QuickBASIC compiles code for the
+ 80287 math coprocessor.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 66.36</td> <td class="ct">206.35</td> <td class="ccnotes">IBM PC/AT 6 MHz, Metaware High C version 1.3, small
+ model. This was compiled with in-line code for the
+ 80287 math coprocessor. Trig functions still call
+ library routines.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 63.07</td> <td class="ct">220.43</td> <td class="ccnotes">IBM PC/AT, 6 MHz, Borland Turbo C, in-line 8087 code,
+ small model, word alignment, no stack checking,
+ 8086 code mode.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 17.18</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Apollo DN-3000, 12 MHz 68020 with 68881, compiled
+ with in-line code for the 68881 coprocessor.
+ According to Apollo, the library routines are chosen
+ at runtime based on coprocessor presence. Since the
+ coprocessor was present, the library is supposed to
+ use in-line floating point code.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 15.55</td> <td class="ct">27.56</td> <td class="ccnotes">VAXstation II GPX. Compiled and executed under
+ VAX/VMS C.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 15.14</td> <td class="ct">37.93</td> <td class="ccnotes">Macintosh II, Unix system V. Green Hills 68020
+ Unix compiler with in-line code for the 68881
+ coprocessor (&ldquo;-O -ZI&rdquo; switches).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 12.69</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Sun 3/160 16 MHz, Sun C.
+ Compiled with &ldquo;-fswitch&rdquo;,
+ which calls a subroutine to select the fastest
+ floating point processor. This was using the 68881.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 11.74</td> <td class="ct">26.73</td> <td class="ccnotes">Compaq Deskpro 386, 16 MHz 80386 with 16 MHz 80387.
+ Metaware High C version 1.3, compiled with in-line
+ for the math coprocessor (but not optimised for the
+ 80386/80387). Trig functions still call library
+ routines.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 8.43</td> <td class="ct">30.49</td> <td class="ccnotes">Sun 3/160 16 MHz, Sun C.
+ Compiled with &ldquo;-f68881&rdquo;,
+ generating in-line MC68881 instructions. Trig
+ functions still call library routines.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 6.29</td> <td class="ct">25.17</td> <td class="ccnotes">Sun 3/260 25 MHz, Sun C.
+ Compiled with &ldquo;-f68881&rdquo;,
+ generating in-line MC68881 instructions. Trig
+ functions still call library routines.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 4.57</td> <td class="ct">&nbsp;</td> <td class="ccnotes">Sun 3/260 25 MHz, Sun FORTRAN 77. Compiled with
+ &ldquo;-O -f68881&rdquo;, generating in-line MC68881 instructions.
+ Trig functions are compiled in-line. This used
+ the FORTRAN 77 version of the program, FBFORT77.F.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 4.00</td> <td class="ct">14.20</td> <td class="ccnotes">Sun386i/25 MHz model 250, Sun C compiler.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 4.00</td> <td class="ct">14.00</td> <td class="ccnotes">Sun386i/25 MHz model 250, Metaware C.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 3.10</td> <td class="ct">12.00</td> <td class="ccnotes">Compaq 386/387 25 MHz running SCO Xenix 2.
+ Compiled with Metaware HighC 386, optimised
+ for 386.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 3.00</td> <td class="ct">12.00</td> <td class="ccnotes">Compaq 386/387 25 MHz optimised for 386/387.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 2.96</td> <td class="ct">5.17</td> <td class="ccnotes">Sun 4/260, Sparc RISC processor. Sun C,
+ compiled with the &ldquo;-O2&rdquo; switch for global
+ optimisation.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 2.47</td> <td class="ct">&nbsp;</td> <td class="ccnotes">COMPAQ 486/25, secondary cache disabled, High C,
+ 486/387, inline f.p., small memory model.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 2.20</td> <td class="ct">3.40</td> <td class="ccnotes">Data General Motorola 88000, 16 MHz, Gnu C.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1.56</td> <td class="ct">&nbsp;</td> <td class="ccnotes">COMPAQ 486/25, 128K secondary cache, High C, 486/387,
+ inline f.p., small memory model.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.66</td> <td class="ct">1.50</td> <td class="ccnotes">DEC Pmax, MIPS processor.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.63</td> <td class="ct">0.91</td> <td class="ccnotes">Sun SparcStation 2, Sun C (SunOS 4.1.1) with
+ &ldquo;-O4&rdquo; optimisation and &ldquo;/usr/lib/libm.il&rdquo; inline
+ floating point.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.60</td> <td class="ct">1.07</td> <td class="ccnotes">Intel 860 RISC processor, 33 MHz, Greenhills
+ C compiler.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.40</td> <td class="ct">0.90</td> <td class="ccnotes">Dec 3MAX,
+ MIPS 3000 processor, &ldquo;-O4&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.31</td> <td class="ct">0.90</td> <td class="ccnotes">IBM RS/6000, &ldquo;-O&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.1129</td> <td class="ct">0.2119</td> <td class="ccnotes">Dell Dimension XPS P133c, Pentium 133 MHz,
+ Windows 95, Microsoft Visual C 5.0.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.0883</td> <td class="ct">0.2166</td> <td class="ccnotes">Silicon
+    Graphics Indigo&sup2;, MIPS R4400,
+    175 MHz, &ldquo;-O3&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.0351</td> <td class="ct">0.0561</td> <td class="ccnotes">Dell Dimension XPS R100, Pentium II 400 MHz,
+ Windows 98, Microsoft Visual C 5.0.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.0312</td> <td class="ct">0.0542</td> <td class="ccnotes">Sun Ultra 2, UltraSPARC V9, 300 MHz, Solaris
+ 2.5.1.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.0141</td> <td class="ct">0.0157</td> <td class="ccnotes">Raspberry Pi 3, ARMv8 Cortex-A53, 1.2 GHz, Raspbian, GCC 4.9.2 &ldquo;-O3&rdquo;
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.00862</td> <td class="ct">0.01074</td> <td class="ccnotes">Dell Inspiron 9100,
+ Pentium 4, 3.4 GHz, GCC 3.2.3 &ldquo;-O3&rdquo;.
+</td></tr>
+</table>
+</center>
+
+<blockquote>
+<p class="j">
+<small>
+All brand and product names are trademarks or registered trademarks of
+their respective companies.  Results of this benchmark may or may not be
+representative of the performance of listed systems for other
+programs and workloads.  Lawyers burn spontaneously in an atmosphere
+of fluorine.
+</small>
+</p>
+</blockquote>
+
+<h3>Comparing Languages</h3>
+
+<p class="j">
+This benchmark was created primarily to compare the performance of
+different computers and implementations of the C language.  Over the
+years, however, the benchmark has been ported to a variety of
+different programming languages.  The following table compares the
+relative performance of these languages taking the run time of the C
+version as 1.  For example, a language with a &ldquo;Relative Time
+&rdquo; of 5 will take five times as long to complete the benchmark
+as the reference C implementation.  Language benchmarks were
+compared to the run time of the C implementation on the same
+machine, with the iteration count of both adjusted to run about five
+minutes. Relative performance was then calculated as the ratio of
+time per iteration.  None of the primary results for
+language implementations tested exploit the thread-level parallelism
+implemented in modern processors.  All of these runs produced
+precisely the <a href="#results">expected results</a>.
+</p>
+
+<center>
+<table width="80%" cellpadding="2">
+<tr>
+    <th class="d">Language</th>
+    <th class="d">Relative<br /> Time</th>
+    <th class="d">Details</th>
+</tr>
+
+<tr>
+    <th class="e">C</th>
+    <td class="ec">1</td>
+    <td class="e">GCC 3.2.3 <tt>-O3</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">JavaScript</th>
+    <td class="ec">0.372 <br />
+                   0.424 <br />
+                   1.334 <br />
+                   1.378 <br />
+                   1.386 <br />
+                   1.495 </td>
+    <td class="e">Mozilla Firefox 55.0.2, Linux<br />
+                  Safari 11.0, MacOS X<br />
+                  Brave 0.18.36, Linux<br />
+                  Google Chrome 61.0.3163.91, Linux<br />
+                  Chromium 60.0.3112.113, Linux<br />
+                  Node.js v6.11.3, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Chapel</th>
+    <td class="ec">0.528<br />
+                   0.0314</td>
+    <td class="e">Chapel 1.16.0, <tt>-fast</tt>, Linux<br />
+                  Parallel, 64 threads</td>
+</tr>
+
+<tr>
+    <th class="e">Visual Basic .NET</th>
+    <td class="ec">0.866</td>
+    <td class="e">All optimisations, Windows XP</td>
+</tr>
+
+<tr>
+    <th class="e">C++</th>
+    <td class="ec">0.939<br />
+                   0.964<br />
+                   31.00<br />
+                   189.7<br />
+                   499.9</td>
+    <td class="e">G++ 5.4.0, <tt>-O3</tt>,
+                    Linux, <tt>double</tt><br />
+                  <tt>long double</tt> (80 bit)<br />
+                  <tt>__float128</tt> (128 bit)<br />
+                  MPFR (128 bit)<br />
+                  MPFR (512 bit)</td>
+</tr>
+
+<tr>
+    <th class="e">Modula-2</th>
+    <td class="ec">0.941</td>
+    <td class="e">GNU Modula-2 gm2-1.6.4 <tt>-O3</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">FORTRAN</th>
+    <td class="ec">1.008</td>
+    <td class="e">GNU Fortran (g77) 3.2.3 <tt>-O3</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Pascal</th>
+    <td class="ec">1.027<br />
+                   1.077</td>
+    <td class="e">Free Pascal 2.2.0 <tt>-O3</tt>, Linux<br />
+                  GNU Pascal 2.1 (GCC 2.95.2) <tt>-O3</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Swift</th>
+    <td class="ec">1.054</td>
+    <td class="e">Swift 3.0.1, <tt>-O</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Java</th>
+    <td class="ec">1.121</td>
+    <td class="e">Sun JDK 1.5.0_04-b05, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Visual Basic 6</th>
+    <td class="ec">1.132</td>
+    <td class="e">All optimisations, Windows XP</td>
+</tr>
+
+<tr>
+    <th class="e">Rust</th>
+    <td class="ec">1.148</td>
+    <td class="e">Rust 1.43.0, <tt>--release</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Haskell</th>
+    <td class="ec">1.223</td>
+    <td class="e">GHC 7.4.1 <tt>-O2 -funbox-strict-fields</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Scala</th>
+    <td class="ec">1.263</td>
+    <td class="e">Scala 2.12.3, OpenJDK 9, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">FreeBASIC</th>
+    <td class="ec">1.306</td>
+    <td class="e">FreeBASIC 1.05.0, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Ada</th>
+    <td class="ec">1.401</td>
+    <td class="e">GNAT/GCC 3.4.4 <tt>-O3</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Go</th>
+    <td class="ec">1.481</td>
+    <td class="e">Go version go1.1.1 linux/amd64, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Julia</th>
+    <td class="ec">1.501</td>
+    <td class="e">Julia version 0.6.1 64-bit <tt>-O2 --check-bounds=no</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Simula</th>
+    <td class="ec">2.099</td>
+    <td class="e">GNU Cim 5.1, GCC 4.8.1 -O2, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Lua</th>
+    <td class="ec">2.515<br />
+                   22.7</td>
+    <td class="e">LuaJIT 2.0.3, Linux<br />
+                  Lua 5.2.3, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Python</th>
+    <td class="ec">2.633<br />
+                   30.0</td>
+    <td class="e">PyPy 2.2.1 (Python 2.7.3), Linux<br />
+                  Python 2.7.6, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Erlang</th>
+    <td class="ec">3.663<br />
+                   9.335</td>
+    <td class="e">Erlang/OTP 17, emulator 6.0, HiPE [native, {hipe, [o3]}]<br />
+                 Byte code (BEAM), Linux</td>
+</tr>
+
+ <tr>
+    <th class="e">ALGOL 60</th>
+    <td class="ec">3.951</td>
+    <td class="e">MARST 2.7, GCC 4.8.1 -O3, Linux</td>
+</tr>
+
+ <tr>
+    <th class="e">PHP</th>
+    <td class="ec">5.033</td>
+    <td class="e">PHP (cli) 7.0.22, Linux</td>
+</tr>
+
+ <tr>
+    <th class="e">PL/I</th>
+    <td class="ec">5.667</td>
+    <td class="e">Iron Spring PL/I 0.9.9b beta, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Lisp</th>
+    <td class="ec">7.41 <br />
+                   19.8</td>
+    <td class="e">GNU Common Lisp 2.6.7, Compiled, Linux<br />
+                  GNU Common Lisp 2.6.7, Interpreted, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Smalltalk</th>
+    <td class="ec">7.59</td>
+    <td class="e">GNU Smalltalk 2.3.5, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Ruby</th>
+    <td class="ec">7.832</td>
+    <td class="e">Ruby 2.4.2p198, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Forth</th>
+    <td class="ec">9.92</td>
+    <td class="e">Gforth 0.7.0, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Prolog</th>
+    <td class="ec">11.72<br />
+                                   5.747</td>
+    <td class="e">SWI-Prolog 7.6.0-rc2, Linux<br />
+                                  GNU Prolog 1.4.4, Linux, (limited iterations)</td>
+</tr>
+
+<tr>
+    <th class="e">COBOL</th>
+    <td class="ec">12.5<br />
+                                   46.3</td>
+    <td class="e">Micro Focus Visual COBOL 2010, Windows 7<br />
+                                  Fixed decimal instead of <tt>computational-2</tt></td>
+</tr>
+
+<tr>
+    <th class="e">Algol 68</th>
+    <td class="ec">15.2</td>
+    <td class="e">Algol 68 Genie 2.4.1 <tt>-O3</tt>, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">Perl</th>
+    <td class="ec">23.6</td>
+    <td class="e">Perl v5.8.0, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">BASICA/GW-BASIC</th>
+    <td class="ec">53.42</td>
+    <td class="e">Bas 2.4, Linux</td>
+</tr>
+
+<tr>
+    <th class="e">QBasic</th>
+    <td class="ec">148.3</td>
+    <td class="e">MS-DOS QBasic 1.1, Windows XP Console</td>
+</tr>
+
+<tr>
+    <th class="e">Mathematica</th>
+    <td class="ec">391.6</td>
+    <td class="e">Mathematica 10.3.1.0, Raspberry Pi 3, Raspbian</td>
+</tr>
+
+</table>
+</center>
+
+<p class="j">
+These results should <em>not</em> be interpreted as representative of
+the overall performance of the various languages for a broad variety
+of tasks.  Each language port is a straightforward translation of the
+reference C algorithm, and does not exploit additional
+features (such as vector and matrix operations) which may be present
+in the target language.  However, the nature of the algorithm does
+not lend itself to such optimisations.
+</p>
+
+<p class="j">
+Special thanks to Jim White
+(&ldquo;<a href="mailto:mathimagics@yahoo.co.uk">mathimagics</a>&rdquo;)&mdash;approach
+with extreme caution, known to be in possession of weapons of math
+instruction&mdash;who ported the benchmark to Visual Basic 6, Java,
+and Scilab; and to
+<a href="http://www.animats.com/" target="_blank">John Nagle</a>,
+who ported the benchmark to Go.
+</p>
+
+<h3><a class="i" name="results">Expected Numerical Results</a></h3>
+
+<p class="j">
+The C language version of this benchmark contains code which
+automatically verifies the results of the computation with those
+expected.  Implementations in some other languages may simply print
+the results and leave it up to you to check that they are correct.
+The following is the output from a correct execution of <b>fbench</b>
+in the other languages.  There may be slight differences in the
+annotations and formatting, but the numbers should be absolutely
+identical.
+</p>
+
+<pre style="padding: 6px; background-color: #FFFFC0;">
+                       Focal Length          Angle to Axis
+Marginal ray         47.09479120920          0.04178472683
+Paraxial ray         47.08372160249          0.04177864821
+
+Longitudinal spherical aberration:        -0.01106960671
+  (Maximum permissible):                   0.05306749907
+                                             Acceptable
+
+Offense against sine condition (coma):     0.00008954761
+    (Maximum permissible):                 0.00250000000
+                                             Acceptable
+
+Axial chromatic aberration:                0.00448229032
+    (Maximum permissible):                 0.05306749907
+                                             Acceptable
+</pre>
+
+<p class="j">
+Don't worry about the terminology&mdash;unless you're an optical
+designer it'll probably make no sense whatsoever.  What's
+important is that the numbers agree to the last decimal place;
+if they don't, it's a sign something is amiss.  If you've
+compiled the benchmark with aggressive optimisation,
+you might try more conservative settings to see if that
+corrects the results.
+</p>
+
+<h3 class="nav"><a href="ffbench.html">FFBENCH</a>: Fast Fourier Transform Benchmark</h3>
+<h3 class="nav"><a href="./">Floating Point Benchmarks</a></h3>
+<h3 class="nav"><a href="/">Fourmilab Home Page</a></h3>
+
+<hr />
+<table align="right">
+<tr><td align="center">
+<form name="feedback" method="post" action="/cgi-bin/FeedbackForm.pl">
+<input type="hidden" name="pagetitle" value="&lt;cite&gt;FBENCH: Floating Point Benchmark&lt;/cite&gt;" />
+<input type="hidden" name="backlink" value="Back to &lt;cite&gt;FBENCH: Floating Point Benchmark&lt;/cite&gt;" />
+<input type="submit" value=" Send Feedback " />
+</form>
+</td></tr>
+<tr><td align="center">
+    <a href="http://validator.w3.org/check?uri=http://www.fourmilab.ch/fbench/fbench.html"
+       class="i" target="_blank"><img
+       src="/images/icons/valid-xhtml10.png"
+       alt="Valid XHTML 1.0" height="31" width="88"
+       class="button" /></a>
+</td></tr>
+</table>
+<address>
+<a href="/">by John Walker</a><br />
+January 12th, 2021
+</address>
+<br clear="right" />
+</body>
+</html>

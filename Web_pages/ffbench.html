@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>FFBENCH: Fast Fourier Transform Benchmark</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link rel="stylesheet" href="/documents/styles/standard_screen.css" type="text/css" />
+<style type="text/css">
+    blockquote.o {
+    	font-family: Helvetica, Arial, sans-serif;
+    	font-size: smaller;
+    }
+    
+    table.results td.ct {
+    	text-align: center;
+	vertical-align: top;
+    }
+    
+    td.ccnotes {
+	text-align: justify;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+    }
+
+    th.d {
+    	background-color: #C0C0C0;
+    }
+    
+    tr.ltgrey {
+    	background-color: #E0E0E0;
+    }
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="author" content="John Walker" />
+<meta name="description" content="FFBENCH: Fast Fourier Transform Benchmark" />
+<meta name="keywords" content="ffbench, benchmark, fast, fourier" />
+<meta name="robots" content="index" />
+</head>
+
+<body class="standard">
+
+<center>
+<h1 style="font-family : Courier, monospace; letter-spacing: 8px;">ffbench</h1>
+<h3>
+Fast Fourier Transform Benchmark
+</h3>
+by <a href="/">John Walker</a><br />
+April 1989<br />
+Last update: November 28th, 2016
+</center>
+
+<hr />
+
+<h3>Introduction</h3>
+
+<p class="j">
+<b>Ffbench</b> executes a specified number of passes (default 20)
+through a loop in which each iteration performs a fast Fourier
+transform of a square matrix (default size 256&times;256) of complex numbers
+(default precision <tt>double</tt>), followed by the inverse transform. After
+all loop iterations are performed the results are checked against
+known correct values.
+</p>
+
+<p class="j">
+This benchmark is intended for use on C implementations which define
+&ldquo;<tt>int</tt>&rdquo; as 32 bits or longer and permit allocation
+and direct addressing of arrays larger than one megabyte.
+</p>
+
+<p class="j">
+If <tt>CAPOUT</tt> is defined, the result after all iterations is written as a
+<a href="/cellab/"><cite>CelLab</cite></a> pattern file. This is
+intended for debugging in case horribly wrong results are obtained on
+a given machine.
+</p>
+
+<p class="j">
+Archival timings are run with the program's configuration variables
+set to: <tt>Float</tt>&nbsp;=&nbsp;<tt>double</tt>,
+<tt>Asize</tt>&nbsp;=&nbsp;256, and <tt>CAPOUT</tt> not defined.
+<tt>Passes</tt> should be adjusted so the benchmark runs about five
+minutes and the measured timing normalised to
+<tt>Passes</tt>&nbsp;=&nbsp;20.
+</p>
+
+<h3>Benchmark Results for Various Systems</h3>
+
+<p class="j">
+Representative timings are given below. All have been
+normalised as if run for 20 iterations.
+</p>
+
+<center>
+<table width="80%" cellpadding="2" class="results">
+<tr><th bgcolor="#C0C0C0"> Time<br /> (seconds)</th> <th bgcolor="#C0C0C0">Computer, Compiler, and Notes</th></tr>
+
+<tr class="ltgrey"><td class="ct"> 2393.93</td> <td>Sun 3/260, SunOS 3.4, C, &ldquo;-f68881 -O&rdquo;.
+ (John Walker).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1928</td> <td>Macintosh IIx, MPW C 3.0, &ldquo;-mc68020
+ -mc68881 -elems881 -m&rdquo;. (Hugh Hoover).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1636.1</td> <td>Sun 4/110, &ldquo;cc -O3 -lm&rdquo;. (Michael McClary).
+ The suspicion is that this is software
+ floating point.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1556.7</td> <td>Macintosh II, A/UX, &ldquo;cc -O -lm&rdquo;
+ (Michael McClary).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1388.8</td> <td>Sun 386i/250, SunOS 4.0.1 C
+ &ldquo;-O /usr/lib/trig.il&rdquo;. (James Carrington).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1331.93</td> <td>Sun 3/60, SunOS 4.0.1, C,
+ &ldquo;-O4 -f68881 /usr/lib/libm.il&rdquo;
+ (Bob Elman).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1204.0</td> <td>Apollo Domain DN4000, C, &ldquo;-cpu 3000 -opt 4&rdquo;.
+ (Sam Crupi).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1174.66</td> <td>Compaq 386/25, SCO Xenix 386 C.
+ (Peter Shieh).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1068</td> <td>Compaq 386/25, SCO Xenix 386,
+ Metaware High C. (Robert Wenig).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1064.0</td> <td>Sun 3/80, SunOS 4.0.3 Beta C
+ &ldquo;-O3 -f68881 /usr/lib/libm.il&rdquo;. (James Carrington).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1061.4</td> <td>Compaq 386/25, SCO Xenix, High C 1.4.
+ (James Carrington).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 1059.79</td> <td>Compaq 386/25, 387/25, High C 1.4,
+ DOS|Extender 2.2, 387 inline code
+ generation. (Nathan Bender).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 777.14</td> <td>Compaq 386/25, IIT 3C87-25 (387 Compatible),
+ High C 1.5, DOS|Extender 2.2, 387 inline
+ code generation. (Nathan Bender).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 751</td> <td>Compaq DeskPro 386/33, High C 1.5 + DOS|Extender,
+ 387 code generation. (James Carrington).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 431.44</td> <td>Compaq 386/25, Weitek 3167-25, DOS 3.31,
+ High C 1.4, DOS|Extender, Weitek code generation.
+ (Nathan Bender).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 344.9</td> <td>Compaq 486/25, Metaware High C 1.6, Phar Lap
+ DOS|Extender, in-line floating point. (Nathan Bender).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 324.2</td> <td>Data General Motorola 88000, 16 Mhz, Gnu C.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 323.1</td> <td>Sun 4/280, C, &ldquo;-O4&rdquo;. (Eric Hill).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 254</td> <td>Compaq SystemPro 486/33, High C 1.5 + DOS|Extender,
+ 387 code generation. (James Carrington).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 242.8</td> <td>Silicon Graphics Personal IRIS, MIPS R2000A,
+ 12.5 Mhz, &ldquo;-O3&rdquo; (highest level optimisation).
+ (Mike Zentner).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 233.0</td> <td>Sun SPARCStation 1, C, &ldquo;-O4&rdquo;, SunOS 4.0.3.
+ (Nathan Bender).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 187.30</td> <td>DEC PMAX 3100, MIPS 2000 chip.
+ (Robert Wenig).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 120.46</td> <td>Sun SparcStation 2, C, &ldquo;-O4&rdquo;, SunOS 4.1.1.
+ (John Walker).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 120.21</td> <td>DEC 3MAX, MIPS 3000, &ldquo;-O4&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 98.0</td> <td>Intel i860 experimental environment,
+ OS/2, data caching disabled. (Kern Sibbald).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 34.9</td> <td>Silicon Graphics Indigo&sup2;, MIPS R4400,
+ 175 Mhz, IRIX 5.2, &ldquo;-O&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 32.4</td> <td>Pentium 133, Windows NT, Microsoft Visual
+ C++ 4.0.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 17.25</td> <td>Silicon Graphics Indigo&sup2;, MIPS R4400,
+ 175 Mhz, IRIX 6.5, &ldquo;-O3&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 14.10</td> <td>Dell Dimension XPS R100, Pentium II 400 MHz,
+ Windows 98, Microsoft Visual C 5.0.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 10.7</td> <td>Hewlett-Packard Kayak XU 450Mhz Pentium II,
+ Microsoft Visual C++ 6.0, Windows NT 4.0sp3.  (Nathan Bender).
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 5.09</td> <td>Sun Ultra 2, UltraSPARC V9, 300 MHz, gcc &ldquo;-O3&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 3.29</td> <td>Raspberry Pi 3, ARMv8 Cortex-A53, 1.2 GHz, Raspbian, GCC 4.9.2 &ldquo;-O3&rdquo;.
+</td></tr>
+
+<tr class="ltgrey"><td class="ct"> 0.846</td> <td>Dell Inspiron 9100, Pentium 4, 3.4 GHz, gcc &ldquo;-O3&rdquo;.
+</td></tr>
+</table>
+</center>
+
+<blockquote>
+<p class="j">
+<small>
+All brand and product names are trademarks or registered trademarks of
+their respective companies.  Results of this benchmark may or may not be
+representative of the performance of listed systems for other
+programs and workloads.  Lawyers burn spontaneously in an atmosphere
+of fluorine.
+</small>
+</p>
+</blockquote>
+
+<h3>Original <tt>ffbench</tt> Release Announcement</h3>
+
+<p class="j">
+<em>The following text accompanied the initial distribution of
+    <b>ffbench</b> on April 24th, 1989.  The text has been slightly
+    edited to remove anachronisms.  Clearly we've come, as Voyager has
+    gone, a long way in the the succeeding years.</em>
+</p>
+
+<blockquote class="o">
+
+<p class="j">
+As Voyager bears down on Neptune, so do the Nineteen Nineties, the
+Gilded Age of Computing, thunder down the tracks toward our products
+and company.  To celebrate, I'm rolling out a new floating point
+benchmark, not to replace the venerable <a href="fbench.html">FBENCH</a> (now nine years old),
+but to provide a different perspective on the floating point
+performance to be had from a machine.
+</p>
+
+<p class="j">
+The original <a href="fbench.html">FBENCH</a>, derived from a program
+that performs geometric ray tracing for lens design (as opposed to ray
+tracing as done for photorealistic rendering), relies heavily on
+trigonometric functions and thus provides a good metric for trig
+function performance.  Its ability to evaluate trig functions in-line
+with series approximations permits comparison of four-function
+floating point performance from compiler generated code with library
+or hardware implemented floating point.  FBENCH has proved, over time,
+to provide a much better estimate of the relative performance of
+<a href="/autofile/" target="_blank">AutoCAD</a> generation time
+on a given machine than it has any right to do.
+</p>
+
+<p class="j">
+FBENCH is representative of much code that &ldquo;does geometry&rdquo;&mdash;it
+consists of many calculation statements, numerous conditionals, and
+frequent function calls.  As such, it does not accurately reflect the
+performance on bulk number crunching to be had from pipeline, or
+MIDA/MIPC (multiple instruction dispatch architecture / multiple
+instruction per cycle) lite-parallel architectures.  As Autodesk
+products come to incorporate more matrix operations and other heavy
+number-crunching algorithms there is a growing need to characterise
+machine performance on such tasks as it can differ substantially from
+relative figures of merit obtained on algorithms such as FBENCH.
+</p>
+
+<p class="j">
+I am now rolling out FFBENCH.C, a contender for this new role.  While
+it differs from FBENCH in many ways, its <em>raison d'&ecirc;tre</em> is the
+same&mdash;it's a benchmark we control ourselves, which we can easily run
+on machines we encounter, whose results we can learn, over time, to
+interpret in the light of their correlation with the performance of
+our several products on actual machines.  Like FBENCH at its
+introduction, FFBENCH is at present immature and untested.  Only as we
+gain familiarity with its results will it become a useful tool.
+Perhaps it will prove unrepresentative and be replaced.  Regardless,
+there is a need for a benchmark to characterise loop-intensive
+floating point performance.
+</p>
+
+<p class="j">
+Like FBENCH, FFBENCH makes no attempt to compete with time-proven
+benchmarks such as Whetstone, LINPACK, or Dhrystone.  Its value is
+that it is portable, ours, runnable under controlled conditions on
+short notice, does something real (and hence isn't subject to
+benchmark-loading compiler optimisations), and checks for the right
+answers (an aspect of the old FBENCH that has embarrassed several
+vendors).
+</p>
+
+<p class="j">
+So what is it?  FFBENCH is a C language program which initialises a
+256 by 256 array of double precision complex numbers to known values
+then executes twenty iterations through a loop, each iteration
+computing the two dimensional Fourier transform of the data in the
+matrix, then applying the inverse transform to recover the original
+data.  The results of each loop iteration are input to the next.
+Upon exit from the the loop, values in the matrix are compared against
+the original pattern stored there&mdash;any discrepancies are reported as
+errors.
+</p>
+
+<p class="j">
+The Fourier transform and its inverse are computed with an algorithm
+derived from that given in &ldquo;Numerical Recipes in C&rdquo; by Press et al.
+This is an N-dimensional generalisation of the fast Fourier transform,
+At the heart of an FFT algorithm are three nested FOR loops with
+problem code only in the innermost loop.  To the extent these loops
+can be collapsed into vector operations, subscript calculations
+replaced by progressive indexing, and expressions within the loop
+compiled into operations executed in parallel, the execution time will
+dramatically be reduced.
+</p>
+
+<p class="j">
+As FBENCH reflected the contemporary community standards of memory
+capacity and CPU performance at the time of its creation, so does
+FFBENCH embody the unvoiced premises of the Gilded Age of
+Computing&mdash;which is to say that it's a memory and CPU hawg.  To
+be precise, FFBENCH requires more than one megabyte of memory,
+dynamically allocates a buffer more than one megabyte in length and
+addresses it as a single array of doubles, and performs on the order
+of 360 million floating point operations in the course of its
+execution.  In addition, the code presumes that the C &ldquo;<tt>int</tt>&rdquo;
+type is 32 bits or more.  In short, we're talking workstations here. 
+If you want to run it on lesser machines, you'll have to tweak the
+code and prepare to be patient.  Well&hellip;yes, and I had to be
+patient to get the FBENCH numbers for the Commodore 128.
+</p>
+
+<p class="j">
+In these heady early days, we aren't being as hard nosed as we've been
+with FBENCH results.  I welcome your reports of the execution time of
+this benchmark on your weapon of choice.  On Unix-like machines,
+reports of User time from the &ldquo;time&rdquo; program are fine, and on other
+machines hand-timed run reports will serve.  We'll tighten up the
+numbers as they become more important.
+</p>
+</blockquote>
+
+<h3 class="nav"><a href="fbench.html">FBENCH</a>:
+    Trigonometry Function Benchmark</h3>
+<h3 class="nav"><a href="./">Floating Point Benchmarks</a></h3>
+<h3 class="nav"><a href="/">Fourmilab Home Page</a></h3>
+
+<hr />
+<table align="right">
+<tr><td>
+<form name="feedback" method="post" action="/cgi-bin/FeedbackForm.pl">
+<input type="hidden" name="pagetitle" value="&lt;cite&gt;FFBENCH: Fast Fourier Transform Benchmark&lt;/cite&gt;" />
+<input type="hidden" name="backlink" value="Back to &lt;cite&gt;FFBENCH: Fast Fourier Transform Benchmark&lt;/cite&gt;" />
+<input type="submit" value=" Send Feedback " />
+</form>
+</td></tr>
+<tr><td align="center">
+    <a href="http://validator.w3.org/check?uri=http://www.fourmilab.ch/fbench/ffbench.html"
+       target="_blank"><img
+       src="/images/icons/valid-xhtml10.png"
+       alt="Valid XHTML 1.0" height="31" width="88"
+       border="0" /></a>
+</td></tr>
+</table>
+<address>
+<a href="/">by John Walker</a><br />
+November 28th, 2016
+</address>
+<br clear="right" />
+
+</body>
+</html>
