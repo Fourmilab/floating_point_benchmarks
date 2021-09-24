@@ -99,6 +99,7 @@ dist:	FORCE
 	    pli \
 	    prolog \
 	    python \
+	    raku \
 	    ruby \
 	    rust \
 	    scala \
