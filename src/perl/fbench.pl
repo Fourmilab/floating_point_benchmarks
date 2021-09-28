@@ -144,11 +144,9 @@ sub trace_line {
 
 
 sub transit_surface {
-        my  ($iang,	    	# Incidence angle
-             $rang,	    	# Refraction angle
-             $iang_sin,	# Incidence angle sin
+        my  ($iang_sin,	# Incidence angle sin
              $rang_sin,	# Refraction angle sin
-             $old_axis_slope_angle, $sagitta);
+             );
 
         if ($paraxial) {
            if ($radius_of_curvature != 0) {
@@ -162,7 +160,7 @@ sub transit_surface {
               }
               $rang_sin = ($from_index / $to_index) *
                  $iang_sin;
-              $old_axis_slope_angle = $axis_slope_angle;
+              my $old_axis_slope_angle = $axis_slope_angle;
               $axis_slope_angle = $axis_slope_angle +
                  $iang_sin - $rang_sin;
               if ($object_distance != 0) {
@@ -185,12 +183,12 @@ sub transit_surface {
                  $radius_of_curvature) / $radius_of_curvature) *
                  sin($axis_slope_angle);
            }
-           $iang = asin($iang_sin);
+           my $iang = asin($iang_sin); # Incidence angle
            $rang_sin = ($from_index / $to_index) *
               $iang_sin;
-           $old_axis_slope_angle = $axis_slope_angle;
+           my $old_axis_slope_angle = $axis_slope_angle;
            $axis_slope_angle += $iang - asin($rang_sin);
-           $sagitta = sin(($old_axis_slope_angle + $iang) / 2);
+           my $sagitta = sin(($old_axis_slope_angle + $iang) / 2);
            $sagitta = 2 * $radius_of_curvature * $sagitta * $sagitta;
            $object_distance = (($radius_of_curvature * sin(
               $old_axis_slope_angle + $iang)) *
@@ -198,8 +196,8 @@ sub transit_surface {
            return;
         }
 
-        $rang = -asin(($from_index / $to_index) *
-           sin($axis_slope_angle));
+        my $rang = -asin(($from_index / $to_index) *
+           sin($axis_slope_angle)); # Refraction angle
         $object_distance *= (($to_index *
            cos(-$rang)) / ($from_index *
            cos($axis_slope_angle)));
