@@ -95,7 +95,7 @@ sub trace_line {
        if ($to_index > 1) {
           $to_index += (($spectral_line[4] -
              $spectral_line[$line]) /
-             ($spectral_line[3] - $spectral_line[6])) * (($_->[1] - 1) /
+             ($spectral_line[3] - $spectral_line[6])) * (($to_index - 1) /
              $_->[2]);
        }
        $paraxial ? transit_surface_paraxial() : transit_surface();
