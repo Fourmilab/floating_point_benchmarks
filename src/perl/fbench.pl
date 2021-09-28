@@ -88,7 +88,6 @@ sub trace_line {
     $ray_height = $ray_h;
     $from_index = 1;
 
-    my $i = 0;
     for (@s) {
        $radius_of_curvature = $_->[0];
        $to_index = $_->[1];
@@ -100,9 +99,7 @@ sub trace_line {
        }
        $paraxial ? transit_surface_paraxial() : transit_surface();
        $from_index = $to_index;
-       if ($i++ < $#s) {
-          $object_distance -= $_->[3];
-       }
+       $object_distance -= $_->[3];
     }
 }
 
