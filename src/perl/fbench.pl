@@ -42,6 +42,7 @@ my @outarr;     	    	    # Computed output of program goes here
 my $niter = $ITERATIONS;	    # Iteration counter
 
 my @spectral_line = (   	    # Spectral lines in which we trace
+                        # wavelengths of Fraunhofer A-F spectral lines
                         undef,
                         7621.0, 	    # A
                         6869.955,	    # B
@@ -67,39 +68,37 @@ my @refarr = (  	    	    # Reference results.  These happen to
         '    (Maximum permissible):                 0.05306749907'
 );
 
-#	The test case used in this program is the design for a 4 inch
+#	The test case used in this program is the design for a 4 inch f/12
 #	achromatic telescope objective used as the example in Wyld's
 #	classic work on ray tracing by hand, given in Amateur Telescope
-#	Making, Volume 3.
+#	Making, Volume 3, p597.
 
 my @testcase = (
-        [ 27.05, 1.5137, 63.6, 0.52 ],
+        # radius of curvature, refractive index, Abbe number, axial distance
+        [ 27.05, 1.5137, 63.6, 0.52 ], # crown
         [ -16.68, 1, 0, 0.138 ],
-        [ -16.68, 1.6164, 36.7, 0.38 ],
+        [ -16.68, 1.6164, 36.7, 0.38 ], # flint
         [ -78.1, 1, 0, 0 ]
 );
 
 #	Perform ray trace in specific spectral line
-
 sub trace_line {
     my ($paraxial, $line, $ray_h) = @_;
-
     $object_distance = 0;
     $ray_height = $ray_h;
     $from_index = 1;
-
     for (@s) {
-       $radius_of_curvature = $_->[0];
-       $to_index = $_->[1];
+       ($radius_of_curvature, $to_index, my $abbe_number, my $axial_distance) = @$_;
        if ($to_index > 1) {
-          $to_index += (($spectral_line[4] -
-             $spectral_line[$line]) /
-             ($spectral_line[3] - $spectral_line[6])) * (($to_index - 1) /
-             $_->[2]);
+          $to_index += (
+             ($spectral_line[4] - $spectral_line[$line]) /
+             ($spectral_line[3] - $spectral_line[6])
+            ) *
+            (($to_index - 1) / $abbe_number);
        }
        $paraxial ? transit_surface_paraxial() : transit_surface();
        $from_index = $to_index;
-       $object_distance -= $_->[3];
+       $object_distance -= $axial_distance;
     }
 }
 
@@ -189,7 +188,6 @@ sub transit_surface {
               cot($axis_slope_angle)) + $sagitta;
            return;
         }
-
         my $rang = -asin(($from_index / $to_index) *
            sin($axis_slope_angle)); # Refraction angle
         $object_distance *= (($to_index *
