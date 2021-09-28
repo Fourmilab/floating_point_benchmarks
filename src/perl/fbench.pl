@@ -250,8 +250,7 @@ for (my $itercount = 0; $itercount < $niter; $itercount++) {
       # Do main trace in D light
 
       trace_line($paraxial, 4, $clear_aperture / 2);
-      $od_sa[$paraxial][0] = $object_distance;
-      $od_sa[$paraxial][1] = $axis_slope_angle;
+      $od_sa[$paraxial] = [$object_distance, $axis_slope_angle];
    }
 
    # Trace marginal ray in C
