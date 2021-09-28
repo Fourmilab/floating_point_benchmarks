@@ -30,7 +30,7 @@ my $ITERATIONS = 1000;
 
 #   Local variables
 
-my ($current_surfaces, $paraxial, $clear_aperture, $aberr_lspher, $aberr_osc,
+my ($paraxial, $clear_aperture, $aberr_lspher, $aberr_osc,
     $aberr_lchrom, $max_lspher, $max_osc, $max_lchrom, $radius_of_curvature,
     $object_distance, $ray_height, $axis_slope_angle, $from_index, $to_index);
 
@@ -88,19 +88,20 @@ sub trace_line {
     $ray_height = $ray_h;
     $from_index = 1;
 
-    for (my $i = 0; $i < $current_surfaces; $i++) {
-       $radius_of_curvature = $s[$i][0];
-       $to_index = $s[$i][1];
+    my $i = 0;
+    for (@s) {
+       $radius_of_curvature = $_->[0];
+       $to_index = $_->[1];
        if ($to_index > 1) {
           $to_index = $to_index + (($spectral_line[4] -
              $spectral_line[$line]) /
-             ($spectral_line[3] - $spectral_line[6])) * (($s[$i][1] - 1) /
-             $s[$i][2]);
+             ($spectral_line[3] - $spectral_line[6])) * (($_->[1] - 1) /
+             $_->[2]);
        }
        transit_surface();
        $from_index = $to_index;
-       if ($i < $current_surfaces-1) {
-          $object_distance = $object_distance - $s[$i][3];
+       if ($i++ < $#s) {
+          $object_distance = $object_distance - $_->[3];
        }
     }
 }
@@ -234,7 +235,6 @@ EOD
 # Load test case into working array
 
 $clear_aperture = 4;
-$current_surfaces = 4;
 @s = map [@$_], @testcase; # one-level copy
 
 my $nik = $niter / 1000;
