@@ -93,7 +93,7 @@ sub trace_line {
        $radius_of_curvature = $_->[0];
        $to_index = $_->[1];
        if ($to_index > 1) {
-          $to_index = $to_index + (($spectral_line[4] -
+          $to_index += (($spectral_line[4] -
              $spectral_line[$line]) /
              ($spectral_line[3] - $spectral_line[6])) * (($_->[1] - 1) /
              $_->[2]);
@@ -101,7 +101,7 @@ sub trace_line {
        transit_surface();
        $from_index = $to_index;
        if ($i++ < $#s) {
-          $object_distance = $object_distance - $_->[3];
+          $object_distance -= $_->[3];
        }
     }
 }
@@ -171,8 +171,8 @@ sub transit_surface {
               $object_distance = $ray_height / $axis_slope_angle;
               return;
            }
-           $object_distance = $object_distance * ($to_index / $from_index);
-           $axis_slope_angle = $axis_slope_angle * ($from_index / $to_index);
+           $object_distance *= ($to_index / $from_index);
+           $axis_slope_angle *= ($from_index / $to_index);
            return;
         }
 
@@ -189,8 +189,7 @@ sub transit_surface {
            $rang_sin = ($from_index / $to_index) *
               $iang_sin;
            $old_axis_slope_angle = $axis_slope_angle;
-           $axis_slope_angle = $axis_slope_angle +
-              $iang - asin($rang_sin);
+           $axis_slope_angle += $iang - asin($rang_sin);
            $sagitta = sin(($old_axis_slope_angle + $iang) / 2);
            $sagitta = 2 * $radius_of_curvature * $sagitta * $sagitta;
            $object_distance = (($radius_of_curvature * sin(
@@ -201,7 +200,7 @@ sub transit_surface {
 
         $rang = -asin(($from_index / $to_index) *
            sin($axis_slope_angle));
-        $object_distance = $object_distance * (($to_index *
+        $object_distance *= (($to_index *
            cos(-$rang)) / ($from_index *
            cos($axis_slope_angle)));
         $axis_slope_angle = -$rang;
