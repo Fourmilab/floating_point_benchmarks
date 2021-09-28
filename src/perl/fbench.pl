@@ -27,7 +27,6 @@
     use Math::Trig;
 
     my $ITERATIONS = 1000;
-    my $max_surfaces = 10;
 
     #   Local variables
 
