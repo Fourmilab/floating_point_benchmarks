@@ -98,7 +98,7 @@ sub trace_line {
              ($spectral_line[3] - $spectral_line[6])) * (($_->[1] - 1) /
              $_->[2]);
        }
-       transit_surface($paraxial);
+       $paraxial ? transit_surface_paraxial() : transit_surface();
        $from_index = $to_index;
        if ($i++ < $#s) {
           $object_distance -= $_->[3];
@@ -106,11 +106,7 @@ sub trace_line {
     }
 }
 
-#	  Calculate passage through surface
-#
-#	  If the variable PARAXIAL is true, the trace through the
-#	  surface will be done using the paraxial approximations.
-#	  Otherwise, the normal trigonometric trace will be done.
+#	  Calculate passage through surface using the paraxial approximations.
 #
 #	  This subroutine takes the following global inputs:
 #
@@ -141,40 +137,40 @@ sub trace_line {
 #
 #	  $axis_slope_angle	  Angle incoming ray makes with axis
 #				  at intercept after refraction.
+sub transit_surface_paraxial {
+  my  ($iang_sin,	# Incidence angle sin
+       $rang_sin,	# Refraction angle sin
+       );
+  if ($radius_of_curvature != 0) {
+      if ($object_distance == 0) {
+         $axis_slope_angle = 0;
+         $iang_sin = $ray_height / $radius_of_curvature;
+      } else {
+         $iang_sin = (($object_distance -
+            $radius_of_curvature) / $radius_of_curvature) *
+            $axis_slope_angle;
+      }
+      $rang_sin = ($from_index / $to_index) *
+         $iang_sin;
+      my $old_axis_slope_angle = $axis_slope_angle;
+      $axis_slope_angle = $axis_slope_angle +
+         $iang_sin - $rang_sin;
+      if ($object_distance != 0) {
+         $ray_height = $object_distance * $old_axis_slope_angle;
+      }
+      $object_distance = $ray_height / $axis_slope_angle;
+      return;
+  }
+  $object_distance *= ($to_index / $from_index);
+  $axis_slope_angle *= ($from_index / $to_index);
+}
 
-
+#	  Calculate passage through surface using normal trigonometric trace
+#	  inputs and output same as paraxial version above
 sub transit_surface {
-        my ($paraxial) = @_;
         my  ($iang_sin,	# Incidence angle sin
              $rang_sin,	# Refraction angle sin
              );
-
-        if ($paraxial) {
-           if ($radius_of_curvature != 0) {
-              if ($object_distance == 0) {
-                 $axis_slope_angle = 0;
-                 $iang_sin = $ray_height / $radius_of_curvature;
-              } else {
-                 $iang_sin = (($object_distance -
-                    $radius_of_curvature) / $radius_of_curvature) *
-                    $axis_slope_angle;
-              }
-              $rang_sin = ($from_index / $to_index) *
-                 $iang_sin;
-              my $old_axis_slope_angle = $axis_slope_angle;
-              $axis_slope_angle = $axis_slope_angle +
-                 $iang_sin - $rang_sin;
-              if ($object_distance != 0) {
-                 $ray_height = $object_distance * $old_axis_slope_angle;
-              }
-              $object_distance = $ray_height / $axis_slope_angle;
-              return;
-           }
-           $object_distance *= ($to_index / $from_index);
-           $axis_slope_angle *= ($from_index / $to_index);
-           return;
-        }
-
         if ($radius_of_curvature != 0) {
            if ($object_distance == 0) {
               $axis_slope_angle = 0;
