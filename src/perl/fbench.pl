@@ -196,11 +196,6 @@ sub transit_surface {
         $axis_slope_angle = -$rang;
 }
 
-# Initialise when called the first time
-
-my ($errors);
-my ($od_fline, $od_cline);
-
 # Process the number of iterations argument, if one is supplied.
 
 if ($#ARGV >= 0) {
@@ -240,6 +235,8 @@ use Time::HiRes qw(gettimeofday tv_interval);
 my @t=gettimeofday();
 
 # Perform ray trace the specified number of times.
+
+my ($od_fline, $od_cline);
 
 for (my $itercount = 0; $itercount < $niter; $itercount++) {
 
@@ -306,7 +303,7 @@ $outarr[7] = sprintf(
 # Now compare the edited results with the master values from
 # reference executions of this program.
 
-$errors = 0;
+my $errors = 0;
 for (my $i = 0; $i < 8; $i++) {
    if ($outarr[$i] ne $refarr[$i]) {
       printf("\nError in results on line %d...\n", $i + 1);
