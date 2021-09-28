@@ -240,10 +240,8 @@ my ($od_fline, $od_cline);
 
 for (my $itercount = 0; $itercount < $niter; $itercount++) {
 
-   for (my $paraxial = 0; $paraxial <= 1; $paraxial++) {
-
+   for my $paraxial (0, 1) {
       # Do main trace in D light
-
       trace_line($paraxial, 4, $clear_aperture / 2);
       $od_sa[$paraxial] = [$object_distance, $axis_slope_angle];
    }
