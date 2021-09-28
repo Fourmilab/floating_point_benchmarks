@@ -30,7 +30,7 @@ my $ITERATIONS = 1000;
 
 #   Local variables
 
-my ($paraxial, $aberr_lspher, $aberr_osc,
+my ($aberr_lspher, $aberr_osc,
     $aberr_lchrom, $max_lspher, $max_osc, $max_lchrom, $radius_of_curvature,
     $object_distance, $ray_height, $axis_slope_angle, $from_index, $to_index);
 
@@ -82,7 +82,7 @@ my @testcase = (
 #	Perform ray trace in specific spectral line
 
 sub trace_line {
-    my ($line, $ray_h) = @_;
+    my ($paraxial, $line, $ray_h) = @_;
 
     $object_distance = 0;
     $ray_height = $ray_h;
@@ -98,7 +98,7 @@ sub trace_line {
              ($spectral_line[3] - $spectral_line[6])) * (($_->[1] - 1) /
              $_->[2]);
        }
-       transit_surface();
+       transit_surface($paraxial);
        $from_index = $to_index;
        if ($i++ < $#s) {
           $object_distance -= $_->[3];
@@ -144,6 +144,7 @@ sub trace_line {
 
 
 sub transit_surface {
+        my ($paraxial) = @_;
         my  ($iang_sin,	# Incidence angle sin
              $rang_sin,	# Refraction angle sin
              );
@@ -251,24 +252,23 @@ my @t=gettimeofday();
 
 for (my $itercount = 0; $itercount < $niter; $itercount++) {
 
-   for ($paraxial = 0; $paraxial <= 1; $paraxial++) {
+   for (my $paraxial = 0; $paraxial <= 1; $paraxial++) {
 
       # Do main trace in D light
 
-      trace_line(4, $clear_aperture / 2);
+      trace_line($paraxial, 4, $clear_aperture / 2);
       $od_sa[$paraxial][0] = $object_distance;
       $od_sa[$paraxial][1] = $axis_slope_angle;
    }
-   $paraxial = 0;
 
    # Trace marginal ray in C
 
-   trace_line(3, $clear_aperture / 2);
+   trace_line(0, 3, $clear_aperture / 2);
    $od_cline = $object_distance;
 
    # Trace marginal ray in F
 
-   trace_line(6, $clear_aperture / 2);
+   trace_line(0, 6, $clear_aperture / 2);
    $od_fline = $object_distance;
 
    $aberr_lspher = $od_sa[1][0] - $od_sa[0][0];
