@@ -89,19 +89,19 @@
 	$ray_height = $ray_h;
 	$from_index = 1;
 
-	for (my $i = 1; $i <= $current_surfaces; $i++) {
-	   $radius_of_curvature = $s[$i][1];
-	   $to_index = $s[$i][2];
+	for (my $i = 0; $i < $current_surfaces; $i++) {
+	   $radius_of_curvature = $s[$i][0];
+	   $to_index = $s[$i][1];
 	   if ($to_index > 1) {
 	      $to_index = $to_index + (($spectral_line[4] -
 		 $spectral_line[$line]) /
-		 ($spectral_line[3] - $spectral_line[6])) * (($s[$i][2] - 1) /
-		 $s[$i][3]);
+		 ($spectral_line[3] - $spectral_line[6])) * (($s[$i][1] - 1) /
+		 $s[$i][2]);
 	   }
 	   transit_surface();
 	   $from_index = $to_index;
-	   if ($i < $current_surfaces) {
-	      $object_distance = $object_distance - $s[$i][4];
+	   if ($i < $current_surfaces-1) {
+	      $object_distance = $object_distance - $s[$i][3];
 	   }
 	}
     }
@@ -238,7 +238,7 @@ EOD
     $current_surfaces = 4;
     for (my $i = 0; $i < $current_surfaces; $i++) {
        for (my $j = 0; $j < 4; $j++) {
-	  $s[$i + 1][$j + 1] = $testcase[$i][$j];
+	  $s[$i][$j] = $testcase[$i][$j];
        }
     }
 
