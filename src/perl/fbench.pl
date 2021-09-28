@@ -235,11 +235,7 @@ EOD
 
 $clear_aperture = 4;
 $current_surfaces = 4;
-for (my $i = 0; $i < $current_surfaces; $i++) {
-   for (my $j = 0; $j < 4; $j++) {
-      $s[$i][$j] = $testcase[$i][$j];
-   }
-}
+@s = map [@$_], @testcase; # one-level copy
 
 my $nik = $niter / 1000;
 print << "EOD";
