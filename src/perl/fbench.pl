@@ -30,7 +30,7 @@ my $ITERATIONS = 1000;
 
 #   Local variables
 
-my ($paraxial, $clear_aperture, $aberr_lspher, $aberr_osc,
+my ($paraxial, $aberr_lspher, $aberr_osc,
     $aberr_lchrom, $max_lspher, $max_osc, $max_lchrom, $radius_of_curvature,
     $object_distance, $ray_height, $axis_slope_angle, $from_index, $to_index);
 
@@ -233,7 +233,7 @@ EOD
 
 # Load test case into working array
 
-$clear_aperture = 4;
+my $clear_aperture = 4;
 @s = map [@$_], @testcase; # one-level copy
 
 my $nik = $niter / 1000;
