@@ -252,8 +252,8 @@ to normalise for reporting results.  For archival results,
 adjust iteration count so the benchmark runs about five minutes.
 
 EOD
-    print("Press return to begin benchmark: ");
-    <>;
+    use Time::HiRes qw(gettimeofday tv_interval);
+    my @t=gettimeofday();
 
     # Perform ray trace the specified number of times.
 
@@ -292,8 +292,9 @@ EOD
        $max_lchrom = $max_lspher;
     }
 
-    printf("Stop the timer:\a ");
-    <>;
+    my $interval = tv_interval(\@t);
+    print "Time taken: $interval\n";
+    print "Divided by $nik = ", $interval/$nik, "\n";
 
     # Now evaluate the accuracy of the results from the last ray trace
 
