@@ -18,7 +18,7 @@
 #	floating point (including trig function) intensive
 #	real-world application, it checks accuracy on an algorithm
 #	that is exquisitely sensitive to errors.  The performance of
-#	this program is typically far more sensitive to changes in 
+#	this program is typically far more sensitive to changes in
 #	the efficiency of the trigonometric library routines than the
 #	average floating point program.
 
@@ -55,7 +55,7 @@ my @spectral_line = (   	    # Spectral lines in which we trace
                     );
 
 my @refarr = (  	    	    # Reference results.  These happen to
-                                # be derived from a run on Microsoft 
+                                # be derived from a run on Microsoft
                                 # Quick BASIC on the IBM PC/AT.
 
         '   Marginal ray          47.09479120920   0.04178472683',
