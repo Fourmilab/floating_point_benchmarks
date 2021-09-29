@@ -307,9 +307,9 @@ for (my $i = 0; $i < 8; $i++) {
       printf("\nError in results on line %d...\n", $i + 1);
       print("Expected:  $refarr[$i]\n");
       print("Received:  $outarr[$i]\n");
-      print("(Errors)    ");
+      print("(Errors)   ");
       my $k = length($refarr[$i]);
-      for (my $j = 0; $j < $k; $j++) {
+      for my $j (0..$k-1) {
          print(substr($refarr[$i], $j, 1) eq substr($outarr[$i], $j, 1) ? ' ' : '^');
          if (substr($refarr[$i], $j, 1) ne substr($outarr[$i], $j, 1)) {
             $errors++;
