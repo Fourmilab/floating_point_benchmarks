@@ -184,8 +184,8 @@ sub transit_surface {
            my $sagitta = sin(($old_axis_slope_angle + $iang) / 2);
            $sagitta = 2 * $radius_of_curvature * $sagitta * $sagitta;
            $object_distance = (($radius_of_curvature * sin(
-              $old_axis_slope_angle + $iang)) *
-              cot($axis_slope_angle)) + $sagitta;
+              $old_axis_slope_angle + $iang)) /
+              tan($axis_slope_angle)) + $sagitta;
            return;
         }
         my $rang = -asin(($from_index / $to_index) *
