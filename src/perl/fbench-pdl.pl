@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#!/usr/bin/env perl
 
 #        John Walker's Floating Point Benchmark, derived from...
 #
@@ -24,7 +24,8 @@
 
 use strict;
 use warnings;
-use Math::Trig;
+use PDL::LiteF;
+use PDL::Math;
 
 my $ITERATIONS = 1000;
 
@@ -41,18 +42,19 @@ my @outarr;     	    	    # Computed output of program goes here
 
 my $niter = $ITERATIONS;	    # Iteration counter
 
-my @spectral_line = (   	    # Spectral lines in which we trace
-                        # wavelengths of Fraunhofer A-F spectral lines
-                        undef,
-                        7621.0, 	    # A
-                        6869.955,	    # B
-                        6562.816,	    # C
-                        5895.944,	    # D
-                        5269.557,	    # E
-                        4861.344,	    # F
-                        4340.477,	    # G'
-                        3968.494	    # H
-                    );
+my $spectral_line = pdl(   	    # Spectral lines in which we trace
+  # wavelengths of Fraunhofer A-F spectral lines
+  undef,
+  7621.0, 	    # A
+  6869.955,	    # B
+  6562.816,	    # C
+  5895.944,	    # D
+  5269.557,	    # E
+  4861.344,	    # F
+  4340.477,	    # G'
+  3968.494	    # H
+);
+($radius_of_curvature, $object_distance, $ray_height, $axis_slope_angle, $from_index, $to_index) = map pdl(0), 1..6;
 
 my @refarr = (  	    	    # Reference results.  These happen to
                                 # be derived from a run on Microsoft
@@ -84,20 +86,20 @@ my @testcase = (
 #	Perform ray trace in specific spectral line
 sub trace_line {
     my ($paraxial, $line, $ray_h) = @_;
-    $object_distance = 0;
-    $ray_height = $ray_h;
-    $from_index = 1;
+    $object_distance .= 0;
+    $ray_height .= $ray_h;
+    $from_index .= 1;
     for (@s) {
-       ($radius_of_curvature, $to_index, my $abbe_number, my $axial_distance) = @$_;
+       ($radius_of_curvature, $to_index, my $abbe_number, my $axial_distance) = map PDL::Core::topdl($_), @$_;
        if ($to_index > 1) {
           $to_index += (
-             ($spectral_line[4] - $spectral_line[$line]) /
-             ($spectral_line[3] - $spectral_line[6])
+             ($spectral_line->slice("(4)") - $spectral_line->slice("($line)")) /
+             ($spectral_line->slice("(3)") - $spectral_line->slice("(6)"))
             ) *
             (($to_index - 1) / $abbe_number);
        }
        $paraxial ? transit_surface_paraxial() : transit_surface();
-       $from_index = $to_index;
+       $from_index .= $to_index;
        $object_distance -= $axial_distance;
     }
 }
@@ -139,7 +141,7 @@ sub transit_surface_paraxial {
        );
   if ($radius_of_curvature != 0) {
       if ($object_distance == 0) {
-         $axis_slope_angle = 0;
+         $axis_slope_angle .= 0;
          $iang_sin = $ray_height / $radius_of_curvature;
       } else {
          $iang_sin = (($object_distance -
@@ -148,13 +150,13 @@ sub transit_surface_paraxial {
       }
       $rang_sin = ($from_index / $to_index) *
          $iang_sin;
-      my $old_axis_slope_angle = $axis_slope_angle;
-      $axis_slope_angle = $axis_slope_angle +
+      my $old_axis_slope_angle = $axis_slope_angle->copy;
+      $axis_slope_angle .= $axis_slope_angle +
          $iang_sin - $rang_sin;
       if ($object_distance != 0) {
-         $ray_height = $object_distance * $old_axis_slope_angle;
+         $ray_height .= $object_distance * $old_axis_slope_angle;
       }
-      $object_distance = $ray_height / $axis_slope_angle;
+      $object_distance .= $ray_height / $axis_slope_angle;
       return;
   }
   $object_distance *= ($to_index / $from_index);
@@ -169,7 +171,7 @@ sub transit_surface {
              );
         if ($radius_of_curvature != 0) {
            if ($object_distance == 0) {
-              $axis_slope_angle = 0;
+              $axis_slope_angle .= 0;
               $iang_sin = $ray_height / $radius_of_curvature;
            } else {
               $iang_sin = (($object_distance -
@@ -179,11 +181,11 @@ sub transit_surface {
            my $iang = asin($iang_sin); # Incidence angle
            $rang_sin = ($from_index / $to_index) *
               $iang_sin;
-           my $old_axis_slope_angle = $axis_slope_angle;
+           my $old_axis_slope_angle = $axis_slope_angle->copy;
            $axis_slope_angle += $iang - asin($rang_sin);
            my $sagitta = sin(($old_axis_slope_angle + $iang) / 2);
-           $sagitta = 2 * $radius_of_curvature * $sagitta * $sagitta;
-           $object_distance = (($radius_of_curvature * sin(
+           $sagitta .= 2 * $radius_of_curvature * $sagitta * $sagitta;
+           $object_distance .= (($radius_of_curvature * sin(
               $old_axis_slope_angle + $iang)) /
               tan($axis_slope_angle)) + $sagitta;
            return;
@@ -193,7 +195,7 @@ sub transit_surface {
         $object_distance *= (($to_index *
            cos(-$rang)) / ($from_index *
            cos($axis_slope_angle)));
-        $axis_slope_angle = -$rang;
+        $axis_slope_angle .= -$rang;
 }
 
 # Process the number of iterations argument, if one is supplied.
@@ -243,18 +245,18 @@ for (my $itercount = 0; $itercount < $niter; $itercount++) {
    for my $paraxial (0, 1) {
       # Do main trace in D light
       trace_line($paraxial, 4, $clear_aperture / 2);
-      $od_sa[$paraxial] = [$object_distance, $axis_slope_angle];
+      $od_sa[$paraxial] = [$object_distance->copy, $axis_slope_angle->copy];
    }
 
    # Trace marginal ray in C
 
    trace_line(0, 3, $clear_aperture / 2);
-   $od_cline = $object_distance;
+   $od_cline = $object_distance->copy;
 
    # Trace marginal ray in F
 
    trace_line(0, 6, $clear_aperture / 2);
-   $od_fline = $object_distance;
+   $od_fline = $object_distance->copy;
 
    $aberr_lspher = $od_sa[1][0] - $od_sa[0][0];
    $aberr_osc = 1 - ($od_sa[1][0] * $od_sa[1][1]) /
