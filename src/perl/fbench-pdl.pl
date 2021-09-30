@@ -75,7 +75,7 @@ my @refarr = (  	    	    # Reference results.  These happen to
 #	classic work on ray tracing by hand, given in Amateur Telescope
 #	Making, Volume 3, p597.
 
-my @testcase = (
+my $testcase = pdl(
         # radius of curvature, refractive index, Abbe number, axial distance
         [ 27.05, 1.5137, 63.6, 0.52 ], # crown
         [ -16.68, 1, 0, 0.138 ],
@@ -83,120 +83,105 @@ my @testcase = (
         [ -78.1, 1, 0, 0 ]
 );
 
-#	Perform ray trace in specific spectral line
-sub trace_line {
-    my ($paraxial, $line, $ray_h) = @_;
-    $object_distance .= 0;
-    $ray_height .= $ray_h;
-    $from_index .= 1;
-    for (@s) {
-       ($radius_of_curvature, $to_index, my $abbe_number, my $axial_distance) = map PDL::Core::topdl($_), @$_;
-       if ($to_index > 1) {
-          $to_index += (
-             ($spectral_line->slice("(4)") - $spectral_line->slice("($line)")) /
-             ($spectral_line->slice("(3)") - $spectral_line->slice("(6)"))
-            ) *
-            (($to_index - 1) / $abbe_number);
-       }
-       $paraxial ? transit_surface_paraxial() : transit_surface();
-       $from_index .= $to_index;
-       $object_distance -= $axial_distance;
+use Inline Pdlpp => <<'EOF';
+pp_def('trace_line',
+  Pars => '
+    surface(elt=4,s); spectral_lines(l); int paraxial(); indx line(); ray_height();
+    [o] object_distance(s); [o] slope_angle(s);',
+  GenericTypes => ['D'],
+  Code => <<'EOCODE',
+  /*
+    Inputs:
+  radius_of_curvature	  Radius of curvature of surface
+			  being crossed.  If 0, surface is plane.
+  object_distance  	  Distance of object focus from
+			  lens vertex.	If 0, incoming rays are parallel and
+			  the following must be specified:
+  ray_height		  Height of ray from axis.  Only
+			  relevant if $object_distance == 0
+  axis_slope_angle 	  Angle incoming ray makes with axis at intercept
+  from_index		  Refractive index of medium being left
+  to_index		  Refractive index of medium being entered.
+    Outputs:
+  object_distance	  Distance from vertex to object focus after refraction.
+  axis_slope_angle	  Angle incoming ray makes with axis
+			  at intercept after refraction.
+  */
+  $GENERIC() o_d = 0, s_a, r_h = $ray_height(), from_index = 1;
+  loop(s) %{
+    /* Perform ray trace in specific spectral line */
+    $GENERIC() radius_of_curvature = $surface(elt=>0, s=>s),
+      to_index = $surface(elt=>1, s=>s),
+      abbe_number = $surface(elt=>2, s=>s),
+      axial_distance = $surface(elt=>3, s=>s);
+    PDL_Indx which_line = $line();
+    if (to_index > 1) {
+      to_index += (
+         ($spectral_lines(l=>4) - $spectral_lines(l=>which_line)) /
+         ($spectral_lines(l=>3) - $spectral_lines(l=>6))
+        ) *
+        ((to_index - 1) / abbe_number);
     }
-}
-
-#	  Calculate passage through surface using the paraxial approximations.
-#
-#	  This subroutine takes the following global inputs:
-#
-#	  $radius_of_curvature	  Radius of curvature of surface
-#				  being crossed.  If 0, surface is
-#				  plane.
-#
-#	  $object_distance  	  Distance of object focus from
-#				  lens vertex.	If 0, incoming
-#				  rays are parallel and
-#				  the following must be specified:
-#
-#	  $ray_height		  Height of ray from axis.  Only
-#				  relevant if $object_distance == 0
-#
-#	  $axis_slope_angle 	  Angle incoming ray makes with axis
-#				  at intercept
-#
-#	  $from_index		  Refractive index of medium being left
-#
-#	  $to_index		  Refractive index of medium being
-#				  entered.
-#
-#	  The outputs are the following global variables:
-#
-#	  $object_distance	  Distance from vertex to object focus
-#				  after refraction.
-#
-#	  $axis_slope_angle	  Angle incoming ray makes with axis
-#				  at intercept after refraction.
-sub transit_surface_paraxial {
-  my  ($iang_sin,	# Incidence angle sin
-       $rang_sin,	# Refraction angle sin
-       );
-  if ($radius_of_curvature != 0) {
-      if ($object_distance == 0) {
-         $axis_slope_angle .= 0;
-         $iang_sin = $ray_height / $radius_of_curvature;
-      } else {
-         $iang_sin = (($object_distance -
-            $radius_of_curvature) / $radius_of_curvature) *
-            $axis_slope_angle;
-      }
-      $rang_sin = ($from_index / $to_index) *
-         $iang_sin;
-      my $old_axis_slope_angle = $axis_slope_angle->copy;
-      $axis_slope_angle .= $axis_slope_angle +
-         $iang_sin - $rang_sin;
-      if ($object_distance != 0) {
-         $ray_height .= $object_distance * $old_axis_slope_angle;
-      }
-      $object_distance .= $ray_height / $axis_slope_angle;
-      return;
-  }
-  $object_distance *= ($to_index / $from_index);
-  $axis_slope_angle *= ($from_index / $to_index);
-}
-
-#	  Calculate passage through surface using normal trigonometric trace
-#	  inputs and output same as paraxial version above
-sub transit_surface {
-        my  ($iang_sin,	# Incidence angle sin
-             $rang_sin,	# Refraction angle sin
-             );
-        if ($radius_of_curvature != 0) {
-           if ($object_distance == 0) {
-              $axis_slope_angle .= 0;
-              $iang_sin = $ray_height / $radius_of_curvature;
-           } else {
-              $iang_sin = (($object_distance -
-                 $radius_of_curvature) / $radius_of_curvature) *
-                 sin($axis_slope_angle);
-           }
-           my $iang = asin($iang_sin); # Incidence angle
-           $rang_sin = ($from_index / $to_index) *
-              $iang_sin;
-           my $old_axis_slope_angle = $axis_slope_angle->copy;
-           $axis_slope_angle += $iang - asin($rang_sin);
-           my $sagitta = sin(($old_axis_slope_angle + $iang) / 2);
-           $sagitta .= 2 * $radius_of_curvature * $sagitta * $sagitta;
-           $object_distance .= (($radius_of_curvature * sin(
-              $old_axis_slope_angle + $iang)) /
-              tan($axis_slope_angle)) + $sagitta;
-           return;
+    $GENERIC() iang_sin /* Incidence angle sin */,
+       rang_sin /* Refraction angle sin */;
+    if ($paraxial()) {
+      if (radius_of_curvature != 0) {
+        if (o_d == 0) {
+          s_a = 0;
+          iang_sin = r_h / radius_of_curvature;
+        } else {
+          iang_sin = ((o_d -
+            radius_of_curvature) / radius_of_curvature) *
+            s_a;
         }
-        my $rang = -asin(($from_index / $to_index) *
-           sin($axis_slope_angle)); # Refraction angle
-        $object_distance *= (($to_index *
-           cos(-$rang)) / ($from_index *
-           cos($axis_slope_angle)));
-        $axis_slope_angle .= -$rang;
-}
+        rang_sin = (from_index / to_index) *
+          iang_sin;
+        $GENERIC() old_axis_slope_angle = s_a;
+        s_a += iang_sin - rang_sin;
+        if (o_d != 0)
+          r_h = o_d * old_axis_slope_angle;
+        o_d = r_h / s_a;
+      } else {
+        o_d *= to_index / from_index;
+        s_a *= from_index / to_index;
+      }
+    } else {
+      if (radius_of_curvature != 0) {
+        if (o_d == 0) {
+          s_a = 0;
+          iang_sin = r_h / radius_of_curvature;
+        } else {
+          iang_sin = ((o_d -
+            radius_of_curvature) / radius_of_curvature) *
+            sin(s_a);
+        }
+        $GENERIC() iang = asin(iang_sin); /* Incidence angle */
+        rang_sin = (from_index / to_index) *
+          iang_sin;
+        $GENERIC() old_axis_slope_angle = s_a;
+        s_a += iang - asin(rang_sin);
+        $GENERIC() sagitta = sin((old_axis_slope_angle + iang) / 2);
+        sagitta = 2 * radius_of_curvature * sagitta * sagitta;
+        o_d = ((radius_of_curvature * sin(
+          old_axis_slope_angle + iang)) /
+          tan(s_a)) + sagitta;
+      } else {
+        $GENERIC() rang = -asin((from_index / to_index) *
+          sin(s_a)); /* Refraction angle */
+        o_d *= ((to_index *
+          cos(-rang)) / (from_index *
+          cos(s_a)));
+        s_a = -rang;
+      }
+    }
+    from_index = to_index;
+    o_d -= axial_distance;
+    $object_distance() = o_d;
+    $slope_angle() = s_a;
+  %}
+EOCODE
+);
+EOF
 
 # Process the number of iterations argument, if one is supplied.
 
@@ -221,7 +206,6 @@ EOD
 # Load test case into working array
 
 my $clear_aperture = 4;
-@s = map [@$_], @testcase; # one-level copy
 
 my $nik = $niter / 1000;
 print << "EOD";
@@ -241,34 +225,26 @@ my @t=gettimeofday();
 my ($od_fline, $od_cline);
 
 for (my $itercount = 0; $itercount < $niter; $itercount++) {
-
-   for my $paraxial (0, 1) {
-      # Do main trace in D light
-      trace_line($paraxial, 4, $clear_aperture / 2);
-      $od_sa[$paraxial] = [$object_distance->copy, $axis_slope_angle->copy];
-   }
-
-   # Trace marginal ray in C
-
-   trace_line(0, 3, $clear_aperture / 2);
-   $od_cline = $object_distance->copy;
-
-   # Trace marginal ray in F
-
-   trace_line(0, 6, $clear_aperture / 2);
-   $od_fline = $object_distance->copy;
-
-   $aberr_lspher = $od_sa[1][0] - $od_sa[0][0];
-   $aberr_osc = 1 - ($od_sa[1][0] * $od_sa[1][1]) /
-      (sin($od_sa[0][1]) * $od_sa[0][0]);
-   $aberr_lchrom = $od_fline - $od_cline;
-   $max_lspher = sin($od_sa[0][1]);
-
-   # D light
-
-   $max_lspher = 0.0000926 / ($max_lspher * $max_lspher);
-   $max_osc = 0.0025;
-   $max_lchrom = $max_lspher;
+  my @inputs = (
+    $testcase,
+    $spectral_line,
+    pdl(0, 1, 0, 0), # paraxial
+    pdl(4, 4, 3, 6), # spectral line - main trace in D light, marginal in C,F
+    pdl($clear_aperture / 2), # ray height, threads so no need to repeat
+  );
+  my ($od, $sa) = PDL::trace_line(@inputs);
+  my $pdl_od_sa = pdl($od, $sa)->slice("(3)")->transpose; # slice as only last col is of interest
+  @od_sa = @{ $pdl_od_sa->slice(",0:1")->unpdl };
+  ($od_cline, $od_fline) = @{ $pdl_od_sa->slice("(0),2:3")->unpdl };
+  $aberr_lspher = $od_sa[1][0] - $od_sa[0][0];
+  $aberr_osc = 1 - ($od_sa[1][0] * $od_sa[1][1]) /
+     (sin($od_sa[0][1]) * $od_sa[0][0]);
+  $aberr_lchrom = $od_fline - $od_cline;
+  $max_lspher = sin($od_sa[0][1]);
+  # D light
+  $max_lspher = 0.0000926 / ($max_lspher * $max_lspher);
+  $max_osc = 0.0025;
+  $max_lchrom = $max_lspher;
 }
 
 my $interval = tv_interval(\@t);
