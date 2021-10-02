@@ -224,28 +224,28 @@ my @t=gettimeofday();
 
 my ($od_fline, $od_cline);
 
-for (my $itercount = 0; $itercount < $niter; $itercount++) {
-  my @inputs = (
-    $testcase,
-    $spectral_line,
-    pdl(0, 1, 0, 0), # paraxial
-    pdl(4, 4, 3, 6), # spectral line - main trace in D light, marginal in C,F
-    pdl($clear_aperture / 2), # ray height, threads so no need to repeat
-  );
-  my ($od, $sa) = PDL::trace_line(@inputs);
-  my $pdl_od_sa = pdl($od, $sa)->slice("(3)")->transpose; # slice as only last col is of interest
-  @od_sa = @{ $pdl_od_sa->slice(",0:1")->unpdl };
-  ($od_cline, $od_fline) = @{ $pdl_od_sa->slice("(0),2:3")->unpdl };
-  $aberr_lspher = $od_sa[1][0] - $od_sa[0][0];
-  $aberr_osc = 1 - ($od_sa[1][0] * $od_sa[1][1]) /
-     (sin($od_sa[0][1]) * $od_sa[0][0]);
-  $aberr_lchrom = $od_fline - $od_cline;
-  $max_lspher = sin($od_sa[0][1]);
-  # D light
-  $max_lspher = 0.0000926 / ($max_lspher * $max_lspher);
-  $max_osc = 0.0025;
-  $max_lchrom = $max_lspher;
-}
+$PDL::BIGPDL=1;
+my @inputs = (
+  $testcase,
+  $spectral_line,
+  pdl(0, 1, 0, 0)->dummy(-1, $niter), # paraxial
+  pdl(4, 4, 3, 6)->dummy(-1, $niter), # spectral line - main trace in D light, marginal in C,F
+  pdl($clear_aperture / 2), # ray height, threads so no need to repeat
+);
+# slice as only last col of dim 0 is of interest, and only last result=dim 2
+my ($od, $sa) = map $_->slice('(-1),,(-1)'), PDL::trace_line(@inputs);
+my $pdl_od_sa = pdl($od, $sa)->transpose;
+@od_sa = @{ $pdl_od_sa->slice(",0:1")->unpdl };
+($od_cline, $od_fline) = @{ $pdl_od_sa->slice("(0),2:3")->unpdl };
+$aberr_lspher = $od_sa[1][0] - $od_sa[0][0];
+$aberr_osc = 1 - ($od_sa[1][0] * $od_sa[1][1]) /
+   (sin($od_sa[0][1]) * $od_sa[0][0]);
+$aberr_lchrom = $od_fline - $od_cline;
+$max_lspher = sin($od_sa[0][1]);
+# D light
+$max_lspher = 0.0000926 / ($max_lspher * $max_lspher);
+$max_osc = 0.0025;
+$max_lchrom = $max_lspher;
 
 my $interval = tv_interval(\@t);
 print "Time taken: $interval\n";
