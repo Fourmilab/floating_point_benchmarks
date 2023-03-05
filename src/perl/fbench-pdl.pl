@@ -94,12 +94,8 @@ pp_def('trace_line',
     Inputs:
   radius_of_curvature	  Radius of curvature of surface
 			  being crossed.  If 0, surface is plane.
-  object_distance  	  Distance of object focus from
-			  lens vertex.	If 0, incoming rays are parallel and
-			  the following must be specified:
   ray_height		  Height of ray from axis.  Only
 			  relevant if $object_distance == 0
-  axis_slope_angle 	  Angle incoming ray makes with axis at intercept
   from_index		  Refractive index of medium being left
   to_index		  Refractive index of medium being entered.
     Outputs:
